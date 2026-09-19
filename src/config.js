@@ -12,4 +12,5 @@ export const config = {
   processedLimit: Number(process.env.PROCESSED_LIMIT || 30),
   steamCountry: process.env.STEAM_COUNTRY || "TW",
   steamLanguage: process.env.STEAM_LANGUAGE || "tchinese",
+  autoClaim: process.env.AUTO_CLAIM === "true",
 };
