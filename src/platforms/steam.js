@@ -39,6 +39,41 @@ export async function claimSteam(game) {
       });
     }
 
+    const purchasePanel = page.locator("#game_area_purchase, .game_area_purchase_game").first();
+    const purchaseText = (await purchasePanel.count())
+      ? await purchasePanel.innerText().catch(() => "")
+      : "";
+    const pageText = await page.locator("body").innerText().catch(() => "");
+    const combinedText = purchaseText + "\n" + pageText;
+
+    if (/demo|試玩|trial|免費試用/i.test(combinedText)) {
+      return createClaimResult({
+        status: CLAIM_STATUS.FAILED,
+        platform: "Steam",
+        game,
+        message: "Steam 頁面顯示為試玩／Demo／Trial，未進行領取",
+      });
+    }
+
+    const freeTextDetected = /free|免費/i.test(purchaseText);
+    if (!freeTextDetected) {
+      return createClaimResult({
+        status: CLAIM_STATUS.FAILED,
+        platform: "Steam",
+        game,
+        message: "未確認 Steam 商品目前可免費取得",
+      });
+    }
+
+    if (/login|signin/i.test(currentUrl)) {
+      return createClaimResult({
+        status: CLAIM_STATUS.FAILED,
+        platform: "Steam",
+        game,
+        message: "Steam 尚未登入，請先建立 storage state",
+      });
+    }
+
     return createClaimResult({
       status: CLAIM_STATUS.READY,
       platform: "Steam",
