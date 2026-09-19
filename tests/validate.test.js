@@ -81,3 +81,34 @@ test("processed state keeps article and game records separately", async () => {
   assert.ok(Array.isArray(data.articles));
   assert.ok(Array.isArray(data.games));
 });
+
+
+test("Steam claim helpers validate trusted URLs and offer states", async () => {
+  const {
+    isTrustedSteamUrl,
+    isAlreadyOwnedText,
+    isTemporaryOfferText,
+    hasFreeOfferText,
+    isClaimConfirmedText,
+  } = await import("../src/platforms/steam.js");
+
+  assert.equal(
+    isTrustedSteamUrl("https://store.steampowered.com/app/123/test"),
+    true
+  );
+  assert.equal(
+    isTrustedSteamUrl("https://evil.example/https://store.steampowered.com/app/123"),
+    false
+  );
+  assert.equal(
+    isTrustedSteamUrl("http://store.steampowered.com/app/123/test"),
+    false
+  );
+  assert.equal(isAlreadyOwnedText("You already own this game"), true);
+  assert.equal(isTemporaryOfferText("Free Weekend"), true);
+  assert.equal(isTemporaryOfferText("Free to Keep"), false);
+  assert.equal(hasFreeOfferText("Free to Keep"), true);
+  assert.equal(hasFreeOfferText("NT$ 299"), false);
+  assert.equal(isClaimConfirmedText("The game has been added to your account"), true);
+  assert.equal(isClaimConfirmedText("Please complete purchase"), false);
+});
