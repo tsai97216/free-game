@@ -10,7 +10,7 @@
     "auth:steam": "node scripts/auth-steam.js",
     "auth:epic": "node scripts/auth-epic.js",
     "auth:gog": "node scripts/auth-gog.js",
-    "claim:dry-run": "node scripts/test-claim.js"
+    "claim:dry-run": "node scripts/claim-dry-run.js"
   },
   "dependencies": {
     "cheerio": "^1.1.2",
