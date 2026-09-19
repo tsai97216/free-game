@@ -19,7 +19,10 @@ const schema = {
 };
 
 export async function getGeminiSummary(text, linkList) {
-  const prompt = `你是一位專業遊戲編輯。請分析內容並提取「所有」限免遊戲。
+  const prompt = `你是一位專業遊戲編輯。請分析內容並提取「所有」可以永久加入玩家帳號的限免遊戲。
+目前支援的平台只有：Steam、GOG、DLsite、Epic Games、Ubisoft Connect。
+請不要回傳 Nintendo Switch 或其他平台，也不要回傳只能暫時免費遊玩的試玩、免費體驗或限時遊玩活動。
+
 當一篇文章提到多款遊戲時（如 Epic 每週限免），請務必將它們分開。
 
 【候選網址清單】：
@@ -32,6 +35,7 @@ ${linkList.join("\n")}
 4. 欄位：name、platform、deadline、genre、gameplay、rating、brief、link。
 5. 內容使用繁體中文。
 6. 找不到可靠對應連結時，link 請填空字串，不要猜測。
+7. platform 請填實際領取平台，不要自行創造平台名稱。
 
 文章內容：
 ${text}`;
