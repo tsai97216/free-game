@@ -5,12 +5,26 @@ export const CLAIM_STATUS = {
   FAILED: "failed",
 };
 
+const KNOWN_STATUSES = new Set(Object.values(CLAIM_STATUS));
+
+export function isClaimStatus(status) {
+  return KNOWN_STATUSES.has(status);
+}
+
+export function shouldRetryClaim(status) {
+  return status === CLAIM_STATUS.READY || status === CLAIM_STATUS.FAILED;
+}
+
 export function createClaimResult({
   status,
   platform,
   game,
   message = "",
 }) {
+  if (!isClaimStatus(status)) {
+    throw new Error(`Unknown claim status: ${status || "empty"}`);
+  }
+
   return {
     status,
     platform,
