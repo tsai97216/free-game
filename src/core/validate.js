@@ -12,6 +12,7 @@ export function normalizeGame(game) {
   const normalized = {
     name: String(game.name || "").trim(),
     platform: normalizePlatform(game.platform),
+    availability: String(game.availability || "").trim(),
     deadline: String(game.deadline || "未提供").trim(),
     genre: String(game.genre || "未提供").trim(),
     gameplay: String(game.gameplay || "未提供").trim(),
@@ -22,6 +23,7 @@ export function normalizeGame(game) {
 
   if (!normalized.name || normalized.name === "解析失敗") return null;
   if (normalized.platform && !isSupportedPlatform(normalized.platform)) return null;
+  if (normalized.availability !== "永久加入") return null;
 
   return normalized;
 }
