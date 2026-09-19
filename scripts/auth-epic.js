@@ -1,16 +1,15 @@
 import "dotenv/config";
-import { chromium } from "playwright";
+import { firefox } from "playwright";
 import { promises as fs } from "node:fs";
 
 const storagePath = process.env.EPIC_STORAGE_STATE || "auth/epic.json";
 
 await fs.mkdir("auth", { recursive: true });
 
-console.log("即將開啟 Epic Games 登入頁。");
-console.log("這個流程不會使用你的日常 Chrome Profile，也不會修改或接管現有 Chrome。");
+console.log("即將開啟 Firefox 進行 Epic Games 登入。");
+console.log("這個流程不會使用或修改你的日常 Chrome Profile。");
 
-const browser = await chromium.launch({
-  channel: "chrome",
+const browser = await firefox.launch({
   headless: false,
 });
 
@@ -26,9 +25,9 @@ await page.goto("https://store.epicgames.com/", {
 });
 
 console.log("");
-console.log("請在開啟的 Chrome 完成 Epic Games 登入。");
+console.log("請在開啟的 Firefox 完成 Epic Games 登入。");
 console.log("如果出現 Cloudflare，請正常完成驗證。");
-console.log("如果 Cloudflare 驗證完成後仍然無限循環，請不要反覆操作，直接關閉瀏覽器並結束這次測試。");
+console.log("如果驗證完成後仍然無限循環，請不要反覆操作，直接關閉瀏覽器並結束這次測試。");
 console.log("如果成功進入 Epic 並確認帳號已登入，回到終端機按 Enter。");
 
 process.stdin.setEncoding("utf8");
