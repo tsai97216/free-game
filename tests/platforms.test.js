@@ -32,7 +32,30 @@ test("Steam claimer is registered", () => {
   assert.equal(typeof getClaimer("Steam"), "function");
 });
 
-test("claimers are safe stubs until platform automation is implemented", async () => {
+test("Epic Games claimer is registered", () => {
+  assert.equal(typeof getClaimer("Epic Games"), "function");
+});
+
+test("Epic Games helpers validate trusted URLs and offer states", async () => {
+  const {
+    isTrustedEpicUrl,
+    isEpicLoginUrl,
+    hasEpicFreeOfferText,
+    isEpicOwnedText,
+    isEpicOrderSuccessText,
+  } = await import("../src/platforms/epic.js");
+
+  assert.equal(isTrustedEpicUrl("https://store.epicgames.com/p/test-game"), true);
+  assert.equal(isTrustedEpicUrl("https://evil.example/store.epicgames.com/p/test"), false);
+  assert.equal(isTrustedEpicUrl("http://store.epicgames.com/p/test-game"), false);
+  assert.equal(isEpicLoginUrl("https://www.epicgames.com/id/login"), true);
+  assert.equal(hasEpicFreeOfferText("Base Game Free"), true);
+  assert.equal(hasEpicFreeOfferText("US$ 29.99"), false);
+  assert.equal(isEpicOwnedText("In Library"), true);
+  assert.equal(isEpicOrderSuccessText("Order Confirmation"), true);
+});
+
+test("unimplemented platform remains a safe stub", async () => {
   const result = await claimGame({
     name: "Test Game",
     platform: "Ubisoft Connect",
