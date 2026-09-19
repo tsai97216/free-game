@@ -42,7 +42,9 @@
 
 - [ ] GOG Claim
 - [ ] DLsite Claim
-- [x] Epic Games Claim
+- [x] Epic Games Claim 基礎流程
+- [ ] 實際 Epic Games Claim 流程測試
+- [ ] Epic Games 領取結果驗證
 - [ ] Ubisoft Connect Claim
 
 新增平台時必須保留既有平台，不得以新平台取代舊平台。
