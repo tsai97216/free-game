@@ -1,4 +1,4 @@
-name: Free Game Bot
+name: DLsite Free Game Bot
 
 on:
   push:
@@ -9,30 +9,30 @@ on:
   workflow_dispatch:
     inputs:
       claim_dry_run:
-        description: "僅檢查支援的平台頁面，不執行領取"
+        description: "僅檢查 DLsite 商品頁，不執行領取"
         required: false
         default: false
         type: boolean
       claim_test_platform:
-        description: "手動 Claim Dry Run 平台，例如 GOG / Epic Games / Steam"
+        description: "手動 Claim Dry Run 平台，固定使用 DLsite"
         required: false
-        default: ""
+        default: "DLsite"
         type: string
       claim_test_url:
-        description: "手動 Claim Dry Run 的商品網址"
+        description: "手動 Claim Dry Run 的 DLsite 商品網址"
         required: false
         default: ""
         type: string
       claim_test_name:
-        description: "手動 Claim Dry Run 的遊戲名稱"
+        description: "手動 Claim Dry Run 的商品名稱"
         required: false
-        default: "Manual Claim Test"
+        default: "Manual DLsite Test"
         type: string
   schedule:
     - cron: "*/10 * * * *"
 
 concurrency:
-  group: free-game-bot
+  group: dlsite-free-game-bot
   cancel-in-progress: false
 
 permissions:
@@ -49,36 +49,6 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - name: Restore Epic Games login state
-        run: |
-          if [ -z "$EPIC_STORAGE_STATE_B64" ]; then
-            echo "EPIC_STORAGE_STATE_B64 not configured, skip Epic Games login state"
-            exit 0
-          fi
-          mkdir -p auth
-          echo "$EPIC_STORAGE_STATE_B64" | base64 --decode > auth/epic.json
-        env:
-          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
-      - name: Restore GOG login state
-        run: |
-          if [ -z "$GOG_STORAGE_STATE_B64" ]; then
-            echo "GOG_STORAGE_STATE_B64 not configured, skip GOG Games login state"
-            exit 0
-          fi
-          mkdir -p auth
-          echo "$GOG_STORAGE_STATE_B64" | base64 --decode > auth/gog.json
-        env:
-          GOG_STORAGE_STATE_B64: ${{ secrets.GOG_STORAGE_STATE_B64 }}
-      - name: Restore Steam login state
-        run: |
-          if [ -z "$STEAM_STORAGE_STATE_B64" ]; then
-            echo "STEAM_STORAGE_STATE_B64 not configured, skip Steam Games login state"
-            exit 0
-          fi
-          mkdir -p auth
-          echo "$STEAM_STORAGE_STATE_B64" | base64 --decode > auth/steam.json
-        env:
-          STEAM_STORAGE_STATE_B64: ${{ secrets.STEAM_STORAGE_STATE_B64 }}
       - name: Restore DLsite login state
         run: |
           if [ -z "$DLSITE_STORAGE_STATE_B64" ]; then
@@ -89,26 +59,16 @@ jobs:
           echo "$DLSITE_STORAGE_STATE_B64" | base64 --decode > auth/dlsite.json
         env:
           DLSITE_STORAGE_STATE_B64: ${{ secrets.DLSITE_STORAGE_STATE_B64 }}
-      - name: Restore Ubisoft Connect login state
-        run: |
-          if [ -z "$UBISOFT_STORAGE_STATE_B64" ]; then
-            echo "UBISOFT_STORAGE_STATE_B64 not configured, skip Ubisoft Connect login state"
-            exit 0
-          fi
-          mkdir -p auth
-          echo "$UBISOFT_STORAGE_STATE_B64" | base64 --decode > auth/ubisoft.json
-        env:
-          UBISOFT_STORAGE_STATE_B64: ${{ secrets.UBISOFT_STORAGE_STATE_B64 }}
       - name: Run manual claim dry-run test
-        if: ${{ inputs.claim_test_platform != '' && inputs.claim_test_url != '' }}
-        run: npm run claim:dry-run -- "${{ inputs.claim_test_platform }}" "${{ inputs.claim_test_url }}" "${{ inputs.claim_test_name }}"
+        if: ${{ inputs.claim_test_url != '' }}
+        run: npm run claim:dry-run -- "DLsite" "${{ inputs.claim_test_url }}" "${{ inputs.claim_test_name }}"
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           AUTO_CLAIM: "false"
           CLAIM_DRY_RUN: "true"
       - name: Run normal bot
-        if: ${{ inputs.claim_test_platform == '' || inputs.claim_test_url == '' }}
+        if: ${{ inputs.claim_test_url == '' }}
         run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -116,7 +76,7 @@ jobs:
           AUTO_CLAIM: "false"
           CLAIM_DRY_RUN: ${{ inputs.claim_dry_run || false }}
       - name: Commit processed state
-        if: ${{ inputs.claim_test_platform == '' || inputs.claim_test_url == '' }}
+        if: ${{ inputs.claim_test_url == '' }}
         run: |
           if git diff --quiet -- data/processed.json; then
             echo "No processed state changes"
