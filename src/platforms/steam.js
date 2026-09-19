@@ -74,11 +74,43 @@ export async function claimSteam(game) {
       });
     }
 
+    const addToAccountButton = page
+      .getByRole("button", { name: /add to account|加入帳號|加入庫中/i })
+      .first();
+
+    if (!(await addToAccountButton.count())) {
+      return createClaimResult({
+        status: CLAIM_STATUS.READY,
+        platform: "Steam",
+        game,
+        message: `已確認可免費取得，但尚未找到安全的領取按鈕：${title || currentUrl}`,
+      });
+    }
+
+    await addToAccountButton.click();
+
+    await page.waitForTimeout(1500);
+
+    const confirmationText = await page.locator("body").innerText().catch(() => "");
+    const successDetected =
+      /added to your account|已加入.*帳號|已加入.*庫|in your library/i.test(
+        confirmationText
+      );
+
+    if (!successDetected) {
+      return createClaimResult({
+        status: CLAIM_STATUS.FAILED,
+        platform: "Steam",
+        game,
+        message: "已嘗試領取，但尚未確認遊戲已加入帳號",
+      });
+    }
+
     return createClaimResult({
-      status: CLAIM_STATUS.READY,
+      status: CLAIM_STATUS.SUCCESS,
       platform: "Steam",
       game,
-      message: `已開啟 Steam 商品頁：${title || currentUrl}`,
+      message: "已確認遊戲加入 Steam 帳號",
     });
   } catch (error) {
     return createClaimResult({
