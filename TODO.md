@@ -42,7 +42,7 @@
 
 - [ ] GOG Claim
 - [ ] DLsite Claim
-- [ ] Epic Games Claim
+- [x] Epic Games Claim
 - [ ] Ubisoft Connect Claim
 
 新增平台時必須保留既有平台，不得以新平台取代舊平台。
