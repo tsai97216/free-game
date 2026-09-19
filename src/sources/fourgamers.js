@@ -5,6 +5,7 @@ import { parseArticle } from "../core/article.js";
 import { getGeminiSummary } from "../ai/gemini.js";
 import { sendGameToDiscord } from "../notification/discord.js";
 import { normalizeGame } from "../core/validate.js";
+import { claimGame } from "../platforms/claimers.js";
 
 const includeKeyword = /限免|限時免費|紳士限免/;
 const excludedKeyword = /限時免費遊玩/;
@@ -42,6 +43,13 @@ export async function checkUpdates() {
         const game = normalizeGame(rawGame);
         if (!game) continue;
         await sendGameToDiscord(game, entryUrl, article.imageUrl);
+
+        if (config.autoClaim) {
+          const result = await claimGame(game);
+          console.log(
+            `Claim result: ${game.name} [${game.platform || "unknown"}] -> ${result.status}: ${result.message}`
+          );
+        }
       }
 
       await markAsProcessed(entryUrl);
