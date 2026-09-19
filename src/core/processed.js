@@ -52,24 +52,25 @@ export async function markAsProcessed(link) {
   await writeState(state);
 }
 
-function gameKey(game) {
+function gameKey(game, articleUrl = "") {
   const link = String(game?.link || "").trim().toLowerCase();
   const platform = String(game?.platform || "").trim().toLowerCase();
   const name = String(game?.name || "").trim().toLowerCase();
+  const article = String(articleUrl || "").trim().toLowerCase();
 
-  return link || `${platform}::${name}`;
+  return `${article}::${link || `${platform}::${name}`}`;
 }
 
-export async function isGameProcessed(game) {
-  const key = gameKey(game);
+export async function isGameProcessed(game, articleUrl = "") {
+  const key = gameKey(game, articleUrl);
   if (!key) return false;
 
   const state = await readState();
   return state.games.includes(key);
 }
 
-export async function markGameAsProcessed(game) {
-  const key = gameKey(game);
+export async function markGameAsProcessed(game, articleUrl = "") {
+  const key = gameKey(game, articleUrl);
   if (!key) return;
 
   const state = await readState();
