@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { isSupportedStoreUrl } from "../platforms/index.js";
 
 export async function parseArticle(url) {
   const response = await fetch(url);
@@ -20,14 +21,7 @@ export async function parseArticle(url) {
       const url = new URL(raw, "https://www.4gamers.com.tw");
       const value = url.toString();
 
-      const supported =
-        /^https:\/\/store\.steampowered\.com\/(?:app|widget)\/\d+/i.test(value) ||
-        /^https:\/\/store\.epicgames\.com\//i.test(value) ||
-        /^https:\/\/www\.dlsite\.com\//i.test(value) ||
-        /^https:\/\/www\.gog\.com\/(?:en\/)?game\//i.test(value) ||
-        /^https:\/\/store\.ubisoft\.com\//i.test(value);
-
-      if (!supported) return;
+      if (!isSupportedStoreUrl(value)) return;
 
       let normalized = value;
       const steamWidget = normalized.match(
