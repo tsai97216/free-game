@@ -122,6 +122,9 @@ test("processed game state separates notification from claim result", async () =
     markGameClaimResult,
   } = await import("../src/core/processed.js");
 
+  const fileUrl = new URL("../data/processed.json", import.meta.url);
+  const original = await fs.readFile(fileUrl, "utf8");
+
   const game = {
     name: "State Test Game",
     platform: "Steam",
@@ -129,25 +132,25 @@ test("processed game state separates notification from claim result", async () =
   };
   const articleUrl = "https://www.4gamers.com.tw/news/detail/state-test";
 
-  assert.equal(await isGameProcessed(game, articleUrl), false);
+  try {
+    await fs.writeFile(fileUrl, JSON.stringify({ articles: [], games: [] }) + "\n");
 
-  await markGameNotified(game, articleUrl);
-  assert.equal(await isGameProcessed(game, articleUrl), true);
-  assert.equal(await getGameClaimStatus(game, articleUrl), null);
+    assert.equal(await isGameProcessed(game, articleUrl), false);
 
-  await markGameClaimResult(game, articleUrl, {
-    status: "failed",
-    message: "test failure",
-  });
+    await markGameNotified(game, articleUrl);
+    assert.equal(await isGameProcessed(game, articleUrl), true);
+    assert.equal(await getGameClaimStatus(game, articleUrl), null);
 
-  assert.deepEqual(await getGameClaimStatus(game, articleUrl), {
-    status: "failed",
-    message: "test failure",
-    updatedAt: await (async () => {
-      const state = JSON.parse(
-        await fs.readFile(new URL("../data/processed.json", import.meta.url), "utf8")
-      );
-      return state.games.find((entry) => entry.key.includes("state-test"))?.claim?.updatedAt;
-    })(),
-  });
+    await markGameClaimResult(game, articleUrl, {
+      status: "failed",
+      message: "test failure",
+    });
+
+    const claim = await getGameClaimStatus(game, articleUrl);
+    assert.equal(claim.status, "failed");
+    assert.equal(claim.message, "test failure");
+    assert.equal(typeof claim.updatedAt, "string");
+  } finally {
+    await fs.writeFile(fileUrl, original);
+  }
 });
