@@ -21,19 +21,57 @@ test("all intended platforms are retained", () => {
   ]);
 });
 
-test("normalizeGame rejects failed or unsupported AI results", () => {
-  assert.equal(normalizeGame({ name: "解析失敗" }), null);
-  assert.equal(normalizeGame({ name: "Switch Game", platform: "Nintendo Switch" }), null);
+test("normalizeGame rejects failed, temporary, uncertain, or unsupported AI results", () => {
+  assert.equal(normalizeGame({ name: "解析失敗", availability: "永久加入" }), null);
+  assert.equal(
+    normalizeGame({
+      name: "Temporary Game",
+      platform: "Steam",
+      availability: "暫時遊玩",
+    }),
+    null
+  );
+  assert.equal(
+    normalizeGame({
+      name: "Uncertain Game",
+      platform: "Steam",
+      availability: "不確定",
+    }),
+    null
+  );
+  assert.equal(
+    normalizeGame({
+      name: "Switch Game",
+      platform: "Nintendo Switch",
+      availability: "永久加入",
+    }),
+    null
+  );
 });
 
-test("normalizeGame rejects unsupported platforms", () => {
-  assert.equal(normalizeGame({ name: "Switch Game", platform: "Nintendo Switch" }), null);
+test("normalizeGame requires explicit permanent availability", () => {
+  assert.equal(
+    normalizeGame({
+      name: "Missing Classification",
+      platform: "Steam",
+    }),
+    null
+  );
+  assert.equal(
+    normalizeGame({
+      name: "Permanent Game",
+      platform: "Steam",
+      availability: "永久加入",
+    }).availability,
+    "永久加入"
+  );
 });
 
 test("normalizeGame canonicalizes supported platform aliases", () => {
   const game = normalizeGame({
     name: "Test Game",
     platform: "epic",
+    availability: "永久加入",
     link: "https://store.epicgames.com/en-US/p/test-game",
   });
 
