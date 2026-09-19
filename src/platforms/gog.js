@@ -46,6 +46,19 @@ async function bodyText(page) {
   return page.locator("body").innerText().catch(() => "");
 }
 
+async function getVisibleGogActionTexts(page) {
+  const candidates = page.locator("button, a, [role='button']");
+  const count = await candidates.count().catch(() => 0);
+  const texts = [];
+  for (let i = 0; i < count && texts.length < 12; i += 1) {
+    const candidate = candidates.nth(i);
+    if (!(await candidate.isVisible().catch(() => false))) continue;
+    const text = (await candidate.innerText().catch(() => "")).replace(/\\s+/g, " ").trim();
+    if (text && /add|get|free|免費|加入|收藏/i.test(text)) texts.push(text);
+  }
+  return [...new Set(texts)];
+}
+
 async function findGogAction(page) {
   const candidates = page.locator("button, a, [role='button']");
   const count = await candidates.count().catch(() => 0);
@@ -95,6 +108,7 @@ export async function claimGog(game) {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
+    await page.waitForTimeout(1500);
 
     if (isGogLoginUrl(page.url())) {
       return failed(game, "GOG 尚未登入，請先建立 storage state");
@@ -117,7 +131,9 @@ export async function claimGog(game) {
 
     const action = await findGogAction(page);
     if (!action) {
-      return failed(game, "已確認 GOG 商品可能免費，但未找到明確的加入收藏庫按鈕");
+      const candidates = await getVisibleGogActionTexts(page);
+      const detail = candidates.length ? `；可見相關按鈕：${candidates.join(" | ")}` : "";
+      return failed(game, `已確認 GOG 商品可能免費，但未找到明確的加入收藏庫按鈕${detail}`);
     }
 
     if (config.claimDryRun) {
