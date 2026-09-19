@@ -25,6 +25,8 @@ async function readState() {
               key: String(game?.key || ""),
               notified: game?.notified === true,
               claim: game?.claim || null,
+              game: game?.game || null,
+              articleUrl: String(game?.articleUrl || ""),
             }
       ).filter((game) => game.key),
     };
@@ -96,8 +98,16 @@ export async function markGameNotified(game, articleUrl = "") {
 
   if (existing) {
     existing.notified = true;
+    existing.game = game;
+    existing.articleUrl = articleUrl;
   } else {
-    state.games.push({ key, notified: true, claim: null });
+    state.games.push({
+      key,
+      notified: true,
+      claim: null,
+      game,
+      articleUrl,
+    });
   }
 
   await writeState(state);
@@ -113,7 +123,16 @@ export async function markGameClaimResult(game, articleUrl = "", result) {
   const { key, game: existing } = findGame(state, game, articleUrl);
   if (!key) return;
 
-  const entry = existing || { key, notified: false, claim: null };
+  const entry = existing || {
+    key,
+    notified: false,
+    claim: null,
+    game,
+    articleUrl,
+  };
+
+  entry.game = game;
+  entry.articleUrl = articleUrl;
   entry.claim = {
     status: String(result?.status || "unknown"),
     message: String(result?.message || ""),
@@ -122,6 +141,22 @@ export async function markGameClaimResult(game, articleUrl = "", result) {
 
   if (!existing) state.games.push(entry);
   await writeState(state);
+}
+
+export async function getPendingClaimGames() {
+  const state = await readState();
+
+  return state.games
+    .filter((entry) =>
+      entry?.game &&
+      entry?.articleUrl &&
+      entry?.claim?.status !== "success"
+    )
+    .map((entry) => ({
+      game: entry.game,
+      articleUrl: entry.articleUrl,
+      claim: entry.claim,
+    }));
 }
 
 export async function exportProcessedLinks() {
