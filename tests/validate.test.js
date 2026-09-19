@@ -26,6 +26,10 @@ test("normalizeGame rejects failed or unsupported AI results", () => {
   assert.equal(normalizeGame({ name: "Switch Game", platform: "Nintendo Switch" }), null);
 });
 
+test("normalizeGame rejects unsupported platforms", () => {
+  assert.equal(normalizeGame({ name: "Switch Game", platform: "Nintendo Switch" }), null);
+});
+
 test("normalizeGame canonicalizes supported platform aliases", () => {
   const game = normalizeGame({
     name: "Test Game",
