@@ -16,6 +16,11 @@ async function readLinks() {
   }
 }
 
+async function writeLinks(links) {
+  await fs.mkdir(dataDir, { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(links, null, 2) + "\n");
+}
+
 export async function isProcessed(link) {
   const links = await readLinks();
   return links.includes(link);
@@ -24,8 +29,11 @@ export async function isProcessed(link) {
 export async function markAsProcessed(link) {
   const links = await readLinks();
   if (!links.includes(link)) links.push(link);
-  const trimmed = links.slice(-config.processedLimit);
 
-  await fs.mkdir(dataDir, { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(trimmed, null, 2) + "\n");
+  const trimmed = links.slice(-config.processedLimit);
+  await writeLinks(trimmed);
+}
+
+export async function exportProcessedLinks() {
+  return readLinks();
 }
