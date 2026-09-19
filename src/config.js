@@ -13,6 +13,7 @@ export const config = {
   steamCountry: process.env.STEAM_COUNTRY || "TW",
   steamLanguage: process.env.STEAM_LANGUAGE || "tchinese",
   epicStorageState: process.env.EPIC_STORAGE_STATE || "auth/epic.json",
+  gogStorageState: process.env.GOG_STORAGE_STATE || "auth/gog.json",
   autoClaim: process.env.AUTO_CLAIM === "true",
   claimDryRun: process.env.CLAIM_DRY_RUN === "true",
 };
