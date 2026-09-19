@@ -23,6 +23,8 @@ export function isSupportedStoreUrl(url) {
   return (
     /^https:\/\/store\.steampowered\.com\//i.test(url) ||
     /^https:\/\/store\.epicgames\.com\//i.test(url) ||
-    /^https:\/\/www\.dlsite\.com\//i.test(url)
+    /^https:\/\/www\.dlsite\.com\//i.test(url) ||
+    /^https:\/\/www\.gog\.com\/(?:en\/)?game\//i.test(url) ||
+    /^https:\/\/store\.ubisoft\.com\//i.test(url)
   );
 }
