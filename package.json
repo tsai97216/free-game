@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "test": "node --test",
     "auth:steam": "node scripts/auth-steam.js",
-    "auth:epic": "node scripts/auth-epic.js"
+    "auth:epic": "node scripts/auth-epic.js",
+    "auth:gog": "node scripts/auth-gog.js"
   },
   "dependencies": {
     "cheerio": "^1.1.2",
