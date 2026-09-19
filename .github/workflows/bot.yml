@@ -44,10 +44,20 @@ jobs:
           echo "$EPIC_STORAGE_STATE_B64" | base64 --decode > auth/epic.json
         env:
           EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
+      - name: Restore GOG login state
+        run: |
+          if [ -z "$GOG_STORAGE_STATE_B64" ]; then
+            echo "GOG_STORAGE_STATE_B64 not configured, skip GOG login state"
+            exit 0
+          fi
+          mkdir -p auth
+          echo "$GOG_STORAGE_STATE_B64" | base64 --decode > auth/gog.json
+        env:
+          GOG_STORAGE_STATE_B64: ${{ secrets.GOG_STORAGE_STATE_B64 }}
       - name: Restore Steam login state
         run: |
           if [ -z "$STEAM_STORAGE_STATE_B64" ]; then
-            echo "STEAM_STORAGE_STATE_B64 not configured, skip Steam login state"
+            echo "STEAM_STORAGE_STATE_B64 not configured, skip Steam Games login state"
             exit 0
           fi
           mkdir -p auth
