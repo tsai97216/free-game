@@ -13,4 +13,5 @@ export const config = {
   steamCountry: process.env.STEAM_COUNTRY || "TW",
   steamLanguage: process.env.STEAM_LANGUAGE || "tchinese",
   autoClaim: process.env.AUTO_CLAIM === "true",
+  claimDryRun: process.env.CLAIM_DRY_RUN === "true",
 };
