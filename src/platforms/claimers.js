@@ -1,21 +1,8 @@
-import { createNotImplementedClaim } from "./claim.js";
-import { SUPPORTED_PLATFORMS } from "./index.js";
-import { claimSteam } from "./steam.js";
-import { claimEpic } from "./epic.js";
-import { claimGog } from "./gog.js";
+import { claimDlsite } from "./dlsite.js";
 
 const claimers = {
-  Steam: claimSteam,
-  GOG: claimGog,
-  "Epic Games": claimEpic,
+  DLsite: claimDlsite,
 };
-
-for (const platform of SUPPORTED_PLATFORMS) {
-  if (!claimers[platform]) {
-    claimers[platform] = async (game) =>
-      createNotImplementedClaim(platform, game);
-  }
-}
 
 export function getClaimer(platform) {
   return claimers[platform] || null;
