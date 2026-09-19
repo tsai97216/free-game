@@ -33,42 +33,41 @@ const schema = {
 };
 
 export async function getGeminiSummary(text, linkList) {
-  const prompt = `你是一位專業遊戲編輯。請分析內容並提取「所有」可以永久加入玩家帳號的限免遊戲。
+  const prompt = `你是一位專業遊戲編輯。請分析內容並提取所有可以永久加入玩家帳號的 DLsite 限免商品。
 
-目前支援的平台只有：Steam、GOG、DLsite、Epic Games、Ubisoft Connect。
-請不要回傳 Nintendo Switch 或其他平台。
+目前這個 worker 只支援 DLsite。
+請不要回傳 Steam、GOG、Epic Games、Ubisoft Connect、Nintendo Switch 或其他平台。
 
 【最重要的判斷】
-只有「現在免費，且完成領取後可以永久加入玩家帳號」才算符合。
+只有「現在免費，且完成取得後可以永久加入玩家帳號」才算符合。
 以下全部排除：
 - 限時免費遊玩、Free Play、免費週末
 - Demo、試玩版、Trial
 - 免費體驗、限時體驗
-- 只在活動期間免費遊玩的完整遊戲
+- 只在活動期間免費遊玩的內容
 - 需要訂閱服務才能遊玩的免費活動
 - 任何無法確認可以永久加入帳號的內容
 
-請為每款候選遊戲填寫 availability：
-- 「永久加入」：文章明確表示可永久加入／免費保留／Free to Keep，或有充分資訊可以確認完成領取後永久擁有。
+請為每款候選商品填寫 availability：
+- 「永久加入」：文章明確表示可永久加入／免費保留，或有充分資訊可以確認完成取得後永久擁有。
 - 「暫時遊玩」：明確屬於 Free Play、免費週末、試玩、Demo、Trial 或其他暫時遊玩活動。
 - 「不確定」：文章資訊不足，無法確認是否可以永久加入。
 
-只有 availability = 「永久加入」的遊戲才能出現在最終 JSON 陣列中。若無符合項目，回傳空陣列。
-
-當一篇文章提到多款遊戲時（如 Epic 每週限免），請務必將它們分開判斷。
+只有 availability = 「永久加入」的商品才能出現在最終 JSON 陣列中。若無符合項目，回傳空陣列。
 
 【候選網址清單】：
 ${linkList.join("\n")}
 
 【配對規則】：
-1. 嚴格對應：請根據遊戲在文中出現的順序，配對【候選網址清單】中對應的連結。
-2. 必須回傳 JSON 陣列。
-3. 每款遊戲都是獨立 JSON 物件。
-4. 欄位：name、platform、availability、deadline、genre、gameplay、rating、brief、link。
-5. 內容使用繁體中文。
-6. 找不到可靠對應連結時，link 請填空字串，不要猜測。
-7. platform 請填實際領取平台，不要自行創造平台名稱。
-8. 不要因為文章標題含有「限免」就直接判定為永久加入，必須看文章正文的實際描述。
+1. 只回傳 DLsite 商品。
+2. 嚴格對應文章內容與【候選網址清單】，不要猜測網址。
+3. 必須回傳 JSON 陣列。
+4. 每款商品都是獨立 JSON 物件。
+5. 欄位：name、platform、availability、deadline、genre、gameplay、rating、brief、link。
+6. platform 固定填「DLsite」。
+7. 內容使用繁體中文。
+8. 找不到可靠 DLsite 商品連結時，link 請填空字串。
+9. 不要因為文章標題含有「限免」就直接判定為永久加入，必須看文章正文的實際描述。
 
 文章內容：
 ${text}`;
