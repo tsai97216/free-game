@@ -19,3 +19,6 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm test
+        env:
+          DISCORD_WEBHOOK_URL: test
+          GEMINI_API_KEY: test
