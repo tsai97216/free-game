@@ -7,6 +7,7 @@ import {
   markGameNotified,
   getGameClaimStatus,
   markGameClaimResult,
+  getPendingClaimGames,
 } from "../core/processed.js";
 import { parseArticle } from "../core/article.js";
 import { getGeminiSummary } from "../ai/gemini.js";
@@ -22,7 +23,33 @@ export function shouldProcessTitle(title) {
   return includeKeyword.test(title) && !excludedKeyword.test(title);
 }
 
+async function retryPendingClaims() {
+  if (!(config.autoClaim || config.claimDryRun)) return;
+
+  const pending = await getPendingClaimGames();
+
+  for (const entry of pending) {
+    try {
+      const result = await claimGame(entry.game);
+      await markGameClaimResult(entry.game, entry.articleUrl, result);
+
+      console.log(
+        `Claim retry: ${entry.game.name} [${entry.game.platform || "unknown"}] -> ${result.status}: ${result.message}`
+      );
+    } catch (error) {
+      console.error(
+        `Claim retry failed for ${entry.game.name || "unknown"}:`,
+        error
+      );
+    }
+  }
+}
+
 export async function checkUpdates() {
+  const shouldAttemptClaim = config.autoClaim || config.claimDryRun;
+
+  await retryPendingClaims();
+
   const response = await fetch(config.rssUrl);
   if (!response.ok) {
     throw new Error(`RSS request failed: ${response.status} ${response.statusText}`);
@@ -57,7 +84,6 @@ export async function checkUpdates() {
           await markGameNotified(game, entryUrl);
         }
 
-        const shouldAttemptClaim = config.autoClaim || config.claimDryRun;
         if (shouldAttemptClaim) {
           const previousClaim = await getGameClaimStatus(game, entryUrl);
           if (previousClaim?.status === CLAIM_STATUS.SUCCESS) continue;
