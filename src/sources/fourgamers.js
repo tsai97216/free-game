@@ -4,6 +4,7 @@ import { isProcessed, markAsProcessed } from "../core/processed.js";
 import { parseArticle } from "../core/article.js";
 import { getGeminiSummary } from "../ai/gemini.js";
 import { sendGameToDiscord } from "../notification/discord.js";
+import { normalizeGame } from "../core/validate.js";
 
 const includeKeyword = /限免|限時免費|紳士限免/;
 const excludedKeyword = /限時免費遊玩/;
@@ -37,8 +38,9 @@ export async function checkUpdates() {
       const article = await parseArticle(entryUrl);
       const games = await getGeminiSummary(article.text, article.storeLinks);
 
-      for (const game of games) {
-        if (!game?.name || game.name === "解析失敗") continue;
+      for (const rawGame of games) {
+        const game = normalizeGame(rawGame);
+        if (!game) continue;
         await sendGameToDiscord(game, entryUrl, article.imageUrl);
       }
 
