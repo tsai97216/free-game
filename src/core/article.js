@@ -23,7 +23,9 @@ export async function parseArticle(url) {
       const supported =
         /^https:\/\/store\.steampowered\.com\/(?:app|widget)\/\d+/i.test(value) ||
         /^https:\/\/store\.epicgames\.com\//i.test(value) ||
-        /^https:\/\/www\.dlsite\.com\//i.test(value);
+        /^https:\/\/www\.dlsite\.com\//i.test(value) ||
+        /^https:\/\/www\.gog\.com\/(?:en\/)?game\//i.test(value) ||
+        /^https:\/\/store\.ubisoft\.com\//i.test(value);
 
       if (!supported) return;
 
