@@ -1,12 +1,17 @@
 import { createNotImplementedClaim } from "./claim.js";
 import { SUPPORTED_PLATFORMS } from "./index.js";
+import { claimSteam } from "./steam.js";
 
-const claimers = Object.fromEntries(
-  SUPPORTED_PLATFORMS.map((platform) => [
-    platform,
-    async (game) => createNotImplementedClaim(platform, game),
-  ])
-);
+const claimers = {
+  Steam: claimSteam,
+};
+
+for (const platform of SUPPORTED_PLATFORMS) {
+  if (!claimers[platform]) {
+    claimers[platform] = async (game) =>
+      createNotImplementedClaim(platform, game);
+  }
+}
 
 export function getClaimer(platform) {
   return claimers[platform] || null;
