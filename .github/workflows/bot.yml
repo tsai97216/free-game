@@ -22,6 +22,11 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - name: Restore Steam login state
+        if: ${{ secrets.STEAM_STORAGE_STATE_B64 != '' }}
+        run: |
+          mkdir -p auth
+          echo "${{ secrets.STEAM_STORAGE_STATE_B64 }}" | base64 --decode > auth/steam.json
       - run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
