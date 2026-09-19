@@ -2,6 +2,12 @@ name: Free Game Bot
 
 on:
   workflow_dispatch:
+    inputs:
+      claim_dry_run:
+        description: "僅檢查 Steam 頁面，不執行領取"
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "*/10 * * * *"
 
@@ -36,7 +42,9 @@ jobs:
       - run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}\n          AUTO_CLAIM: "false"\n          CLAIM_DRY_RUN: ${{ inputs.claim_dry_run || false }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AUTO_CLAIM: "false"
+          CLAIM_DRY_RUN: ${{ inputs.claim_dry_run || false }}
       - name: Commit processed state
         run: |
           if git diff --quiet -- data/processed.json; then
