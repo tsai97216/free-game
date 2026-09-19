@@ -10,14 +10,23 @@ async function readState() {
     const raw = await fs.readFile(filePath, "utf8");
     const data = JSON.parse(raw);
 
-    // Backward compatibility with the original article-URL array format.
     if (Array.isArray(data)) {
       return { articles: data, games: [] };
     }
 
+    const games = Array.isArray(data?.games) ? data.games : [];
+
     return {
       articles: Array.isArray(data?.articles) ? data.articles : [],
-      games: Array.isArray(data?.games) ? data.games : [],
+      games: games.map((game) =>
+        typeof game === "string"
+          ? { key: game, notified: true, claim: null }
+          : {
+              key: String(game?.key || ""),
+              notified: game?.notified === true,
+              claim: game?.claim || null,
+            }
+      ).filter((game) => game.key),
     };
   } catch (error) {
     if (error.code === "ENOENT") return { articles: [], games: [] };
@@ -61,24 +70,57 @@ function gameKey(game, articleUrl = "") {
   return `${article}::${link || `${platform}::${name}`}`;
 }
 
-export async function isGameProcessed(game, articleUrl = "") {
+function findGame(state, game, articleUrl = "") {
   const key = gameKey(game, articleUrl);
-  if (!key) return false;
+  if (!key) return { key: "", game: null };
 
+  return {
+    key,
+    game: state.games.find((entry) => entry.key === key) || null,
+  };
+}
+
+export async function isGameProcessed(game, articleUrl = "") {
   const state = await readState();
-  return state.games.includes(key);
+  return Boolean(findGame(state, game, articleUrl).game?.notified);
 }
 
 export async function markGameAsProcessed(game, articleUrl = "") {
-  const key = gameKey(game, articleUrl);
+  return markGameNotified(game, articleUrl);
+}
+
+export async function markGameNotified(game, articleUrl = "") {
+  const state = await readState();
+  const { key, game: existing } = findGame(state, game, articleUrl);
   if (!key) return;
 
-  const state = await readState();
-
-  if (!state.games.includes(key)) {
-    state.games.push(key);
+  if (existing) {
+    existing.notified = true;
+  } else {
+    state.games.push({ key, notified: true, claim: null });
   }
 
+  await writeState(state);
+}
+
+export async function getGameClaimStatus(game, articleUrl = "") {
+  const state = await readState();
+  return findGame(state, game, articleUrl).game?.claim || null;
+}
+
+export async function markGameClaimResult(game, articleUrl = "", result) {
+  const state = await readState();
+  const { key, game: existing } = findGame(state, game, articleUrl);
+  if (!key) return;
+
+  const entry = existing || { key, notified: false, claim: null };
+  entry.claim = {
+    status: String(result?.status || "unknown"),
+    message: String(result?.message || ""),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (!existing) state.games.push(entry);
   await writeState(state);
 }
 
