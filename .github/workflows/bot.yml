@@ -34,6 +34,16 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npx playwright install --with-deps chromium
+      - name: Restore Epic Games login state
+        run: |
+          if [ -z "$EPIC_STORAGE_STATE_B64" ]; then
+            echo "EPIC_STORAGE_STATE_B64 not configured, skip Epic Games login state"
+            exit 0
+          fi
+          mkdir -p auth
+          echo "$EPIC_STORAGE_STATE_B64" | base64 --decode > auth/epic.json
+        env:
+          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
       - name: Restore Steam login state
         run: |
           if [ -z "$STEAM_STORAGE_STATE_B64" ]; then
