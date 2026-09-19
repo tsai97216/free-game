@@ -6,7 +6,12 @@ import {
   normalizePlatform,
 } from "../src/platforms/index.js";
 import { claimGame, getClaimer } from "../src/platforms/claimers.js";
-import { CLAIM_STATUS } from "../src/platforms/claim.js";
+import {
+  CLAIM_STATUS,
+  createClaimResult,
+  isClaimStatus,
+  shouldRetryClaim,
+} from "../src/platforms/claim.js";
 
 test("only DLsite is supported by this worker", () => {
   assert.deepEqual(SUPPORTED_PLATFORMS, ["DLsite"]);
@@ -43,4 +48,28 @@ test("DLsite remains an explicit not-implemented claim until a safe claimer exis
   assert.equal(result.platform, "DLsite");
   assert.equal(result.game.name, "Test Item");
   assert.match(result.message, /尚未實作/);
+});
+
+test("claim statuses have explicit retry semantics", () => {
+  assert.equal(isClaimStatus(CLAIM_STATUS.NOT_IMPLEMENTED), true);
+  assert.equal(isClaimStatus(CLAIM_STATUS.READY), true);
+  assert.equal(isClaimStatus(CLAIM_STATUS.SUCCESS), true);
+  assert.equal(isClaimStatus(CLAIM_STATUS.FAILED), true);
+  assert.equal(isClaimStatus("unknown"), false);
+
+  assert.equal(shouldRetryClaim(CLAIM_STATUS.NOT_IMPLEMENTED), false);
+  assert.equal(shouldRetryClaim(CLAIM_STATUS.READY), true);
+  assert.equal(shouldRetryClaim(CLAIM_STATUS.SUCCESS), false);
+  assert.equal(shouldRetryClaim(CLAIM_STATUS.FAILED), true);
+});
+
+test("claim results reject unknown statuses", () => {
+  assert.throws(
+    () => createClaimResult({
+      status: "unknown",
+      platform: "DLsite",
+      game: {},
+    }),
+    /Unknown claim status/
+  );
 });
