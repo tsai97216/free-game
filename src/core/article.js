@@ -22,16 +22,7 @@ export async function parseArticle(url) {
       const value = url.toString();
 
       if (!isSupportedStoreUrl(value)) return;
-
-      let normalized = value;
-      const steamWidget = normalized.match(
-        /^https:\/\/store\.steampowered\.com\/widget\/(\d+)/i
-      );
-      if (steamWidget) {
-        normalized = `https://store.steampowered.com/app/${steamWidget[1]}/`;
-      }
-
-      if (!storeLinks.includes(normalized)) storeLinks.push(normalized);
+      if (!storeLinks.includes(value)) storeLinks.push(value);
     } catch {
       // Ignore malformed links.
     }
