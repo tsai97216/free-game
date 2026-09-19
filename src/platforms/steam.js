@@ -3,15 +3,31 @@ import { config } from "../config.js";
 import { CLAIM_STATUS, createClaimResult } from "./claim.js";
 
 const storageState = process.env.STEAM_STORAGE_STATE || "auth/steam.json";
+const STEAM_HOST = "store.steampowered.com";
+
+function failed(game, message) {
+  return createClaimResult({
+    status: CLAIM_STATUS.FAILED,
+    platform: "Steam",
+    game,
+    message,
+  });
+}
 
 export async function claimSteam(game) {
   if (!game?.link) {
-    return createClaimResult({
-      status: CLAIM_STATUS.FAILED,
-      platform: "Steam",
-      game,
-      message: "缺少 Steam 商品網址",
-    });
+    return failed(game, "缺少 Steam 商品網址");
+  }
+
+  let gameUrl;
+  try {
+    gameUrl = new URL(game.link);
+  } catch {
+    return failed(game, "Steam 商品網址格式錯誤");
+  }
+
+  if (gameUrl.protocol !== "https:" || gameUrl.hostname !== STEAM_HOST) {
+    return failed(game, "商品網址不是受信任的 Steam 商店網址");
   }
 
   const browser = await chromium.launch({ headless: true });
@@ -22,7 +38,7 @@ export async function claimSteam(game) {
     });
     const page = await context.newPage();
 
-    await page.goto(game.link, {
+    await page.goto(gameUrl.toString(), {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
@@ -31,52 +47,41 @@ export async function claimSteam(game) {
     const title = await page.title();
 
     if (/login|signin/i.test(currentUrl)) {
-      return createClaimResult({
-        status: CLAIM_STATUS.FAILED,
-        platform: "Steam",
-        game,
-        message: "Steam 尚未登入，請先建立 storage state",
-      });
+      return failed(game, "Steam 尚未登入，請先建立 storage state");
     }
 
     const purchasePanel = page.locator("#game_area_purchase, .game_area_purchase_game").first();
     const purchaseText = (await purchasePanel.count())
       ? await purchasePanel.innerText().catch(() => "")
       : "";
-    const pageText = await page.locator("body").innerText().catch(() => "");
-    const combinedText = purchaseText + "\n" + pageText;
+    const alreadyOwnedText = await page
+      .locator(".game_area_already_owned")
+      .innerText()
+      .catch(() => "");
 
-    if (/demo|試玩|trial|免費試用/i.test(combinedText)) {
+    if (/already own|已在.*收藏庫|已在.*庫|in your library/i.test(alreadyOwnedText)) {
       return createClaimResult({
-        status: CLAIM_STATUS.FAILED,
+        status: CLAIM_STATUS.SUCCESS,
         platform: "Steam",
         game,
-        message: "Steam 頁面顯示為試玩／Demo／Trial，未進行領取",
+        message: "Steam 已確認遊戲在帳號收藏庫中",
       });
     }
 
-    const freeTextDetected = /free|免費/i.test(purchaseText);
+    if (/demo|試玩|trial|免費試用/i.test(purchaseText)) {
+      return failed(game, "Steam 頁面顯示為試玩／Demo／Trial，未進行領取");
+    }
+
+    const freeTextDetected = /\bfree\b|免費/i.test(purchaseText);
     const purchaseDisabled = await page
-      .locator(".game_area_purchase_game input:disabled, .game_area_purchase_game button:disabled")
+      .locator(
+        ".game_area_purchase_game input:disabled, .game_area_purchase_game button:disabled"
+      )
       .count()
       .catch(() => 0);
 
     if (!freeTextDetected || purchaseDisabled > 0) {
-      return createClaimResult({
-        status: CLAIM_STATUS.FAILED,
-        platform: "Steam",
-        game,
-        message: "未確認 Steam 商品目前可免費取得",
-      });
-    }
-
-    if (/login|signin/i.test(currentUrl)) {
-      return createClaimResult({
-        status: CLAIM_STATUS.FAILED,
-        platform: "Steam",
-        game,
-        message: "Steam 尚未登入，請先建立 storage state",
-      });
+      return failed(game, "未確認 Steam 商品目前可免費取得");
     }
 
     const addToAccountButton = page
@@ -85,9 +90,10 @@ export async function claimSteam(game) {
           "#game_area_purchase .btn_green_steamui",
           ".game_area_purchase_game .btn_green_steamui",
           ".game_area_purchase_game a.btn_green_steamui",
+          ".game_area_purchase_game button.btn_green_steamui",
         ].join(", ")
       )
-      .filter({ hasText: /free|免費|play game|開始遊戲|加入/i })
+      .filter({ hasText: /add to account|加入帳號|加入帳戶/i })
       .first();
 
     if (!(await addToAccountButton.count())) {
@@ -95,17 +101,16 @@ export async function claimSteam(game) {
         status: CLAIM_STATUS.READY,
         platform: "Steam",
         game,
-        message: `已確認可免費取得，但尚未找到安全的領取按鈕：${title || currentUrl}`,
+        message: `已確認可免費取得，但尚未找到明確的「加入帳號」按鈕：${title || currentUrl}`,
       });
     }
 
     await addToAccountButton.click();
-
     await page.waitForTimeout(1500);
 
     const confirmationText = await page.locator("body").innerText().catch(() => "");
     const successDetected =
-      /added to your account|已加入.*帳號|已加入.*庫|in your library|已在你的收藏庫/i.test(
+      /added to your account|已加入.*帳號|已加入.*庫|in your library|已在.*收藏庫/i.test(
         confirmationText
       ) ||
       /已在收藏庫|in library/i.test(
@@ -113,12 +118,7 @@ export async function claimSteam(game) {
       );
 
     if (!successDetected) {
-      return createClaimResult({
-        status: CLAIM_STATUS.FAILED,
-        platform: "Steam",
-        game,
-        message: "已嘗試領取，但尚未確認遊戲已加入帳號",
-      });
+      return failed(game, "已嘗試領取，但尚未確認遊戲已加入帳號");
     }
 
     return createClaimResult({
@@ -128,16 +128,12 @@ export async function claimSteam(game) {
       message: "已確認遊戲加入 Steam 帳號",
     });
   } catch (error) {
-    return createClaimResult({
-      status: CLAIM_STATUS.FAILED,
-      platform: "Steam",
-      game,
-      message: `Steam 頁面操作失敗：${error.message}`,
-    });
+    return failed(game, `Steam 頁面操作失敗：${error.message}`);
   } finally {
     await browser.close();
   }
 }
+
 export async function getSteamPriceByName(gameName) {
   if (!gameName || gameName === "未知遊戲") return "";
 
