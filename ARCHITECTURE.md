@@ -49,6 +49,7 @@ Claim 流程與通知流程分離：
 - `src/platforms/claim.js`: Claim 結果與狀態模型
 - `src/platforms/claimers.js`: 平台 Claim 路由
 - `src/platforms/steam.js`: Steam Playwright Claim 實作
+- `src/platforms/epic.js`: Epic Games Playwright Claim 基礎流程
 
 目前平台：
 
@@ -58,7 +59,7 @@ Claim 流程與通知流程分離：
 4. Epic Games
 5. Ubisoft Connect
 
-只有 Steam 目前有實際 Claim 實作，其餘平台保留平台定義與未實作 Claimer。
+Steam 與 Epic Games 已有基礎 Claim 流程，其餘平台保留平台定義與未實作 Claimer。
 
 ## 4. State Model
 
@@ -97,6 +98,7 @@ Claim 流程與通知流程分離：
 - Node.js 20
 - npm install
 - Playwright Chromium
+- 若設定 Epic Games storage state 則還原 Epic Games 登入狀態
 - 還原 Steam storage state
 - 執行 `npm start`
 - 若 `processed.json` 有變更則 commit 回 main
