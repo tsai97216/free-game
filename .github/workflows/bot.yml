@@ -1,6 +1,9 @@
 name: Free Game Bot
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       claim_dry_run:
