@@ -57,7 +57,8 @@ export async function checkUpdates() {
           await markGameNotified(game, entryUrl);
         }
 
-        if (config.autoClaim) {
+        const shouldAttemptClaim = config.autoClaim || config.claimDryRun;
+        if (shouldAttemptClaim) {
           const previousClaim = await getGameClaimStatus(game, entryUrl);
           if (previousClaim?.status === CLAIM_STATUS.SUCCESS) continue;
 
