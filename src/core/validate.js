@@ -1,3 +1,9 @@
+import {
+  isSupportedPlatform,
+  isSupportedStoreUrl,
+  normalizePlatform,
+} from "../platforms/index.js";
+
 const httpUrl = /^https?:\/\//i;
 
 export function normalizeGame(game) {
@@ -5,7 +11,7 @@ export function normalizeGame(game) {
 
   const normalized = {
     name: String(game.name || "").trim(),
-    platform: String(game.platform || "").trim(),
+    platform: normalizePlatform(game.platform),
     deadline: String(game.deadline || "未提供").trim(),
     genre: String(game.genre || "未提供").trim(),
     gameplay: String(game.gameplay || "未提供").trim(),
@@ -15,16 +21,9 @@ export function normalizeGame(game) {
   };
 
   if (!normalized.name || normalized.name === "解析失敗") return null;
+  if (normalized.platform && !isSupportedPlatform(normalized.platform)) return null;
+
   return normalized;
 }
 
-export function isSupportedStoreUrl(url) {
-  if (!url || !httpUrl.test(url)) return false;
-  return (
-    /^https:\/\/store\.steampowered\.com\//i.test(url) ||
-    /^https:\/\/store\.epicgames\.com\//i.test(url) ||
-    /^https:\/\/www\.dlsite\.com\//i.test(url) ||
-    /^https:\/\/www\.gog\.com\/(?:en\/)?game\//i.test(url) ||
-    /^https:\/\/store\.ubisoft\.com\//i.test(url)
-  );
-}
+export { isSupportedStoreUrl };
