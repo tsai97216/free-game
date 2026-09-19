@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - data/processed.json
   workflow_dispatch:
     inputs:
       claim_dry_run:
