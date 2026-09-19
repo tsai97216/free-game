@@ -6,6 +6,7 @@ import {
   normalizePlatform,
 } from "../src/platforms/index.js";
 import { claimGame, getClaimer } from "../src/platforms/claimers.js";
+import { CLAIM_STATUS } from "../src/platforms/claim.js";
 
 test("only DLsite is supported by this worker", () => {
   assert.deepEqual(SUPPORTED_PLATFORMS, ["DLsite"]);
@@ -28,4 +29,18 @@ test("unsupported platforms cannot enter the claim flow", async () => {
     }),
     /Unsupported platform/
   );
+});
+
+test("DLsite remains an explicit not-implemented claim until a safe claimer exists", async () => {
+  const result = await claimGame({
+    name: "Test Item",
+    platform: "DLsite",
+    link: "https://www.dlsite.com/maniax/work/=/product_id/RJ000000.html",
+    availability: "永久加入",
+  });
+
+  assert.equal(result.status, CLAIM_STATUS.NOT_IMPLEMENTED);
+  assert.equal(result.platform, "DLsite");
+  assert.equal(result.game.name, "Test Item");
+  assert.match(result.message, /尚未實作/);
 });
