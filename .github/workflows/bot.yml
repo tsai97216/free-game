@@ -24,10 +24,15 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - name: Restore Steam login state
-        if: ${{ secrets.STEAM_STORAGE_STATE_B64 != '' }}
         run: |
+          if [ -z "$STEAM_STORAGE_STATE_B64" ]; then
+            echo "STEAM_STORAGE_STATE_B64 not configured, skip Steam login state"
+            exit 0
+          fi
           mkdir -p auth
-          echo "${{ secrets.STEAM_STORAGE_STATE_B64 }}" | base64 --decode > auth/steam.json
+          echo "$STEAM_STORAGE_STATE_B64" | base64 --decode > auth/steam.json
+        env:
+          STEAM_STORAGE_STATE_B64: ${{ secrets.STEAM_STORAGE_STATE_B64 }}
       - run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
