@@ -10,6 +10,8 @@
     "auth:steam": "node scripts/auth-steam.js",
     "auth:epic": "node scripts/auth-epic.js",
     "auth:gog": "node scripts/auth-gog.js",
+    "auth:dlsite": "node scripts/auth-dlsite.js",
+    "auth:ubisoft": "node scripts/auth-ubisoft.js",
     "claim:dry-run": "node scripts/claim-dry-run.js"
   },
   "dependencies": {
