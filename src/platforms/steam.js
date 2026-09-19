@@ -5,6 +5,33 @@ import { CLAIM_STATUS, createClaimResult } from "./claim.js";
 const storageState = process.env.STEAM_STORAGE_STATE || "auth/steam.json";
 const STEAM_HOST = "store.steampowered.com";
 
+export function isTrustedSteamUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === STEAM_HOST;
+  } catch {
+    return false;
+  }
+}
+
+export function isAlreadyOwnedText(text) {
+  return /already own|已在.*收藏庫|已在.*庫|in your library/i.test(String(text || ""));
+}
+
+export function isTemporaryOfferText(text) {
+  return /demo|試玩|trial|免費試用|free weekend|free play/i.test(String(text || ""));
+}
+
+export function hasFreeOfferText(text) {
+  return /\bfree\b|免費/i.test(String(text || ""));
+}
+
+export function isClaimConfirmedText(text) {
+  return /added to your account|已加入.*帳號|已加入.*庫|in your library|已在.*收藏庫|in library/i.test(
+    String(text || "")
+  );
+}
+
 function failed(game, message) {
   return createClaimResult({
     status: CLAIM_STATUS.FAILED,
@@ -19,17 +46,11 @@ export async function claimSteam(game) {
     return failed(game, "缺少 Steam 商品網址");
   }
 
-  let gameUrl;
-  try {
-    gameUrl = new URL(game.link);
-  } catch {
-    return failed(game, "Steam 商品網址格式錯誤");
-  }
-
-  if (gameUrl.protocol !== "https:" || gameUrl.hostname !== STEAM_HOST) {
+  if (!isTrustedSteamUrl(game.link)) {
     return failed(game, "商品網址不是受信任的 Steam 商店網址");
   }
 
+  const gameUrl = new URL(game.link);
   const browser = await chromium.launch({ headless: true });
 
   try {
@@ -59,7 +80,7 @@ export async function claimSteam(game) {
       .innerText()
       .catch(() => "");
 
-    if (/already own|已在.*收藏庫|已在.*庫|in your library/i.test(alreadyOwnedText)) {
+    if (isAlreadyOwnedText(alreadyOwnedText)) {
       return createClaimResult({
         status: CLAIM_STATUS.SUCCESS,
         platform: "Steam",
@@ -68,11 +89,11 @@ export async function claimSteam(game) {
       });
     }
 
-    if (/demo|試玩|trial|免費試用/i.test(purchaseText)) {
+    if (isTemporaryOfferText(purchaseText)) {
       return failed(game, "Steam 頁面顯示為試玩／Demo／Trial，未進行領取");
     }
 
-    const freeTextDetected = /\bfree\b|免費/i.test(purchaseText);
+    const freeTextDetected = hasFreeOfferText(purchaseText);
     const purchaseDisabled = await page
       .locator(
         ".game_area_purchase_game input:disabled, .game_area_purchase_game button:disabled"
@@ -110,11 +131,9 @@ export async function claimSteam(game) {
 
     const confirmationText = await page.locator("body").innerText().catch(() => "");
     const successDetected =
-      /added to your account|已加入.*帳號|已加入.*庫|in your library|已在.*收藏庫/i.test(
-        confirmationText
-      ) ||
-      /已在收藏庫|in library/i.test(
-        (await page.locator(".game_area_already_owned").innerText().catch(() => ""))
+      isClaimConfirmedText(confirmationText) ||
+      isAlreadyOwnedText(
+        await page.locator(".game_area_already_owned").innerText().catch(() => "")
       );
 
     if (!successDetected) {
