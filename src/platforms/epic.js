@@ -2,7 +2,7 @@ import { chromium } from "playwright";
 import { config } from "../config.js";
 import { CLAIM_STATUS, createClaimResult } from "./claim.js";
 
-const storageState = process.env.EPIC_STORAGE_STATE || "auth/epic.json";
+const storageState = config.epicStorageState;
 const EPIC_HOSTS = new Set(["store.epicgames.com", "www.epicgames.com"]);
 
 export function isTrustedEpicUrl(value) {
@@ -17,7 +17,7 @@ export function isTrustedEpicUrl(value) {
 export function isEpicLoginUrl(value) {
   try {
     const url = new URL(value);
-    return //id/login|/login/i.test(url.pathname);
+    return /\/id\/login|\/login/i.test(url.pathname);
   } catch {
     return false;
   }
