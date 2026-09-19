@@ -5,7 +5,12 @@ import { parseArticle } from "../core/article.js";
 import { getGeminiSummary } from "../ai/gemini.js";
 import { sendGameToDiscord } from "../notification/discord.js";
 
-const keyword = /限免|限時免費|紳士限免/;
+const includeKeyword = /限免|限時免費|紳士限免/;
+const excludedKeyword = /限時免費遊玩/;
+
+export function shouldProcessTitle(title) {
+  return includeKeyword.test(title) && !excludedKeyword.test(title);
+}
 
 export async function checkUpdates() {
   const response = await fetch(config.rssUrl);
@@ -26,7 +31,7 @@ export async function checkUpdates() {
     const entryUrl = String(item.link || "").trim();
     const title = String(item.title || "").trim();
 
-    if (!entryUrl || !keyword.test(title) || await isProcessed(entryUrl)) continue;
+    if (!entryUrl || !shouldProcessTitle(title) || await isProcessed(entryUrl)) continue;
 
     try {
       const article = await parseArticle(entryUrl);
