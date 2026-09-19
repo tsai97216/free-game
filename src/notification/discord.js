@@ -1,5 +1,4 @@
 import { config } from "../config.js";
-import { getSteamPriceByName } from "../platforms/steam.js";
 
 export async function sendGameToDiscord(game, entryUrl, imageUrl) {
   const titleLink =
@@ -7,19 +6,15 @@ export async function sendGameToDiscord(game, entryUrl, imageUrl) {
       ? game.link
       : entryUrl;
 
-  const platform = game.platform || "未提供";
-  const steamPrice =
-    platform === "Steam" ? await getSteamPriceByName(game.name) : "";
-  const priceDisplay = steamPrice ? `~~${steamPrice}~~ **Free**` : "**Free**";
-
+  const platform = game.platform || "DLsite";
   const payload = {
     embeds: [
       {
-        title: `🎁 限時免費情報：${game.name || "未知遊戲"}`,
+        title: `🎁 限時免費情報：${game.name || "未知商品"}`,
         url: titleLink,
         color: 3447003,
         description:
-          `${priceDisplay} until \`${game.deadline || "未提供"}\`\n\n` +
+          `**Free** until \`${game.deadline || "未提供"}\`\n\n` +
           `**🎮 遊戲類型：** ${game.genre || "未提供"}\n` +
           `**🕹️ 玩法簡介：** ${game.gameplay || "未提供"}\n` +
           `**⭐️ 玩家評價：** ${game.rating || "未提供"}\n` +
@@ -29,7 +24,7 @@ export async function sendGameToDiscord(game, entryUrl, imageUrl) {
           { name: "文章來源", value: `[4Gamers 傳送門](${entryUrl})`, inline: true },
         ],
         ...(imageUrl ? { image: { url: imageUrl } } : {}),
-        footer: { text: "限時免費情報系統" },
+        footer: { text: "DLsite 限時免費情報系統" },
         timestamp: new Date().toISOString(),
       },
     ],
