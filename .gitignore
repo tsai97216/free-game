@@ -9,4 +9,3 @@ auth/
 storage/
 *.log
 .DS_Store
-data/processed.json
