@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       claim_dry_run:
-        description: "僅檢查 Steam 頁面，不執行領取"
+        description: "僅檢查支援的平台頁面，不執行領取"
         required: false
         default: false
         type: boolean
