@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { config } from "../config.js";
+import { shouldRetryClaim } from "../platforms/claim.js";
 
 const dataDir = path.resolve("data");
 const filePath = path.join(dataDir, "processed.json");
@@ -150,7 +151,7 @@ export async function getPendingClaimGames() {
     .filter((entry) =>
       entry?.game &&
       entry?.articleUrl &&
-      entry?.claim?.status !== "success"
+      shouldRetryClaim(entry?.claim?.status)
     )
     .map((entry) => ({
       game: entry.game,
