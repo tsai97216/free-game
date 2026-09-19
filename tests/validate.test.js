@@ -112,3 +112,42 @@ test("Steam claim helpers validate trusted URLs and offer states", async () => {
   assert.equal(isClaimConfirmedText("The game has been added to your account"), true);
   assert.equal(isClaimConfirmedText("Please complete purchase"), false);
 });
+
+
+test("processed game state separates notification from claim result", async () => {
+  const {
+    markGameNotified,
+    isGameProcessed,
+    getGameClaimStatus,
+    markGameClaimResult,
+  } = await import("../src/core/processed.js");
+
+  const game = {
+    name: "State Test Game",
+    platform: "Steam",
+    link: "https://store.steampowered.com/app/999999/state-test/",
+  };
+  const articleUrl = "https://www.4gamers.com.tw/news/detail/state-test";
+
+  assert.equal(await isGameProcessed(game, articleUrl), false);
+
+  await markGameNotified(game, articleUrl);
+  assert.equal(await isGameProcessed(game, articleUrl), true);
+  assert.equal(await getGameClaimStatus(game, articleUrl), null);
+
+  await markGameClaimResult(game, articleUrl, {
+    status: "failed",
+    message: "test failure",
+  });
+
+  assert.deepEqual(await getGameClaimStatus(game, articleUrl), {
+    status: "failed",
+    message: "test failure",
+    updatedAt: await (async () => {
+      const state = JSON.parse(
+        await fs.readFile(new URL("../data/processed.json", import.meta.url), "utf8")
+      );
+      return state.games.find((entry) => entry.key.includes("state-test"))?.claim?.updatedAt;
+    })(),
+  });
+});
