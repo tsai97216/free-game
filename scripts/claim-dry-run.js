@@ -3,7 +3,7 @@ import "dotenv/config";
 const [platform, link, name = "Manual Claim Test"] = process.argv.slice(2);
 
 if (!platform || !link) {
-  console.error("用法：node scripts/test-claim.js <platform> <url> [name]");
+  console.error("用法：node scripts/claim-dry-run.js <platform> <url> [name]");
   process.exit(1);
 }
 
