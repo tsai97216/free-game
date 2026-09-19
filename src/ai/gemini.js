@@ -37,11 +37,14 @@ ${linkList.join("\n")}
 ${text}`;
 
   const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent?key=${encodeURIComponent(config.geminiApiKey)}`;
+    `https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent`;
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": config.geminiApiKey,
+    },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
