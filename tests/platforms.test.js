@@ -36,6 +36,27 @@ test("Epic Games claimer is registered", () => {
   assert.equal(typeof getClaimer("Epic Games"), "function");
 });
 
+test("GOG claimer is registered", () => {
+  assert.equal(typeof getClaimer("GOG"), "function");
+});
+
+test("GOG helpers validate trusted URLs and offer states", async () => {
+  const {
+    isTrustedGogUrl,
+    isGogLoginUrl,
+    hasGogFreeOfferText,
+    isGogOwnedText,
+  } = await import("../src/platforms/gog.js");
+
+  assert.equal(isTrustedGogUrl("https://www.gog.com/game/test-game"), true);
+  assert.equal(isTrustedGogUrl("https://evil.example/www.gog.com/game/test"), false);
+  assert.equal(isTrustedGogUrl("http://www.gog.com/game/test-game"), false);
+  assert.equal(isGogLoginUrl("https://www.gog.com/login"), true);
+  assert.equal(hasGogFreeOfferText("Get it for free"), true);
+  assert.equal(hasGogFreeOfferText("US$ 19.99"), false);
+  assert.equal(isGogOwnedText("Already in your library"), true);
+});
+
 test("Epic Games helpers validate trusted URLs and offer states", async () => {
   const {
     isTrustedEpicUrl,
