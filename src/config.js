@@ -10,10 +10,7 @@ export const config = {
   geminiApiKey: required("GEMINI_API_KEY"),
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   processedLimit: Number(process.env.PROCESSED_LIMIT || 30),
-  steamCountry: process.env.STEAM_COUNTRY || "TW",
-  steamLanguage: process.env.STEAM_LANGUAGE || "tchinese",
-  epicStorageState: process.env.EPIC_STORAGE_STATE || "auth/epic.json",
-  gogStorageState: process.env.GOG_STORAGE_STATE || "auth/gog.json",
+  dlsiteStorageState: process.env.DLSITE_STORAGE_STATE || "auth/dlsite.json",
   autoClaim: process.env.AUTO_CLAIM === "true",
   claimDryRun: process.env.CLAIM_DRY_RUN === "true",
 };
