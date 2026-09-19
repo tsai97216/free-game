@@ -8,8 +8,9 @@
 
 - 讀取 4Gamers RSS
 - 篩選「限免／限時免費／紳士限免」文章
+- 排除只能暫時免費遊玩的活動
 - 抓取文章 HTML
-- 提取 Steam、Epic Games、DLsite 等商店連結
+- 提取 Steam、GOG、DLsite、Epic Games、Ubisoft Connect 等商店連結
 - 使用 Gemini 分析文章並整理遊戲資訊
 - 使用 Steam API 查詢價格
 - 透過 Discord Webhook 發送通知
@@ -24,7 +25,17 @@
 
 Source → Parser → Game Data → Platform → Claim → Notification
 
-未來可能支援多個資訊來源與遊戲平台，但不要為了尚未存在的需求過度設計。
+目前預定支援的平台：
+
+- Steam
+- GOG
+- DLsite
+- Epic Games
+- Ubisoft Connect
+
+平台清單是可擴充的。新增平台時，應保留既有平台，不應因新增平台而移除已支援的平台。
+
+目標是「可以永久加入帳號」的免費遊戲，不包含 Nintendo Switch 等只能暫時免費遊玩的活動。
 
 ## Rules
 
@@ -38,6 +49,7 @@ Source → Parser → Game Data → Platform → Claim → Notification
 8. 專案主要供本人與 AI 協作維護，不需要為開源社群增加不必要的文件或流程。
 9. TODO.md 用來記錄目前待辦與未來規劃；已完成項目應適時清理或移動。
 10. 如果需求存在多種合理方案，優先選擇簡單、可靠且符合目前專案規模的方案。
+11. 新增平台時採增量方式加入，既有平台必須保留；不要把「新增平台」誤解成「替換平台」。
 
 ## Important Decisions
 
@@ -45,3 +57,4 @@ Source → Parser → Game Data → Platform → Claim → Notification
 - Default branch: main
 - 原始 GAS 版本目前仍視為可參考的既有實作。
 - 從 GAS 遷移到 Node.js / Playwright 應採漸進式方式，不一次重寫全部功能。
+- 目前平台目標：Steam、GOG、DLsite、Epic Games、Ubisoft Connect。
