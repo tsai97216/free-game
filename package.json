@@ -2,16 +2,12 @@
   "name": "free-game",
   "version": "0.1.0",
   "private": true,
-  "description": "Personal free game detection and automation project",
+  "description": "Personal DLsite free-game detection and automation worker",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test",
-    "auth:steam": "node scripts/auth-steam.js",
-    "auth:epic": "node scripts/auth-epic.js",
-    "auth:gog": "node scripts/auth-gog.js",
     "auth:dlsite": "node scripts/auth-dlsite.js",
-    "auth:ubisoft": "node scripts/auth-ubisoft.js",
     "claim:dry-run": "node scripts/claim-dry-run.js"
   },
   "dependencies": {
