@@ -51,6 +51,19 @@ async function bodyText(page) {
   return page.locator("body").innerText().catch(() => "");
 }
 
+async function getVisibleButtonTexts(page) {
+  const candidates = page.locator("button, a, [role='button']");
+  const count = await candidates.count().catch(() => 0);
+  const texts = [];
+  for (let i = 0; i < count && texts.length < 12; i += 1) {
+    const candidate = candidates.nth(i);
+    if (!(await candidate.isVisible().catch(() => false))) continue;
+    const text = (await candidate.innerText().catch(() => "")).replace(/\\s+/g, " ").trim();
+    if (text && /get|取得|獲取|免費|free/i.test(text)) texts.push(text);
+  }
+  return [...new Set(texts)];
+}
+
 async function clickTextButton(page, patterns) {
   const candidates = page.locator("button, a, [role='button']");
   const count = await candidates.count().catch(() => 0);
@@ -91,6 +104,7 @@ export async function claimEpic(game) {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
+    await page.waitForTimeout(1500);
 
     if (isEpicLoginUrl(page.url())) {
       return failed(game, "Epic Games 尚未登入，請先建立 storage state");
@@ -117,7 +131,9 @@ export async function claimEpic(game) {
       .first();
 
     if (!(await getButton.count())) {
-      return failed(game, "已確認 Epic Games 商品可能免費，但未找到明確的 Get／取得按鈕");
+      const candidates = await getVisibleButtonTexts(page);
+      const detail = candidates.length ? `；可見相關按鈕：${candidates.join(" | ")}` : "";
+      return failed(game, `已確認 Epic Games 商品可能免費，但未找到明確的 Get／取得按鈕${detail}`);
     }
 
     if (config.claimDryRun) {
