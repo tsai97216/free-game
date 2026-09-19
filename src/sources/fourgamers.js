@@ -1,6 +1,11 @@
 import { XMLParser } from "fast-xml-parser";
 import { config } from "../config.js";
-import { isProcessed, markAsProcessed, isGameProcessed, markGameAsProcessed } from "../core/processed.js";
+import {
+  isProcessed,
+  markAsProcessed,
+  isGameProcessed,
+  markGameAsProcessed,
+} from "../core/processed.js";
 import { parseArticle } from "../core/article.js";
 import { getGeminiSummary } from "../ai/gemini.js";
 import { sendGameToDiscord } from "../notification/discord.js";
@@ -41,21 +46,17 @@ export async function checkUpdates() {
 
       for (const rawGame of games) {
         const game = normalizeGame(rawGame);
-        if (!game || await isGameProcessed(game)) continue;
+        if (!game || await isGameProcessed(game, entryUrl)) continue;
+
+        await sendGameToDiscord(game, entryUrl, article.imageUrl);
+        await markGameAsProcessed(game, entryUrl);
 
         if (config.autoClaim) {
           const result = await claimGame(game);
-
-          if (result.status !== "success") {
-            console.log(
-              `Claim result: ${game.name} [${game.platform || "unknown"}] -> ${result.status}: ${result.message}`
-            );
-            continue;
-          }
+          console.log(
+            `Claim result: ${game.name} [${game.platform || "unknown"}] -> ${result.status}: ${result.message}`
+          );
         }
-
-        await sendGameToDiscord(game, entryUrl, article.imageUrl);
-        await markGameAsProcessed(game);
       }
 
       await markAsProcessed(entryUrl);
