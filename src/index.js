@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { checkUpdates } from "./sources/fourgamers.js";
 
 async function main() {
