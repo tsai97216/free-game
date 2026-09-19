@@ -56,7 +56,12 @@ export async function claimSteam(game) {
     }
 
     const freeTextDetected = /free|免費/i.test(purchaseText);
-    if (!freeTextDetected) {
+    const purchaseDisabled = await page
+      .locator(".game_area_purchase_game input:disabled, .game_area_purchase_game button:disabled")
+      .count()
+      .catch(() => 0);
+
+    if (!freeTextDetected || purchaseDisabled > 0) {
       return createClaimResult({
         status: CLAIM_STATUS.FAILED,
         platform: "Steam",
@@ -75,7 +80,14 @@ export async function claimSteam(game) {
     }
 
     const addToAccountButton = page
-      .getByRole("button", { name: /add to account|加入帳號|加入庫中/i })
+      .locator(
+        [
+          "#game_area_purchase .btn_green_steamui",
+          ".game_area_purchase_game .btn_green_steamui",
+          ".game_area_purchase_game a.btn_green_steamui",
+        ].join(", ")
+      )
+      .filter({ hasText: /free|免費|play game|開始遊戲|加入/i })
       .first();
 
     if (!(await addToAccountButton.count())) {
@@ -93,8 +105,11 @@ export async function claimSteam(game) {
 
     const confirmationText = await page.locator("body").innerText().catch(() => "");
     const successDetected =
-      /added to your account|已加入.*帳號|已加入.*庫|in your library/i.test(
+      /added to your account|已加入.*帳號|已加入.*庫|in your library|已在你的收藏庫/i.test(
         confirmationText
+      ) ||
+      /已在收藏庫|in library/i.test(
+        (await page.locator(".game_area_already_owned").innerText().catch(() => ""))
       );
 
     if (!successDetected) {
