@@ -8,6 +8,9 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.2",
+    "fast-xml-parser": "^5.2.7",
     "playwright": "^1.55.0"
   }
 }
