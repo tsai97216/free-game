@@ -1,7 +1,7 @@
-import { claimDlsite } from "./dlsite.js";
+import { createNotImplementedClaim } from "./claim.js";
 
 const claimers = {
-  DLsite: claimDlsite,
+  DLsite: async (game) => createNotImplementedClaim("DLsite", game),
 };
 
 export function getClaimer(platform) {
