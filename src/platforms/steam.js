@@ -1,22 +1,58 @@
+import { chromium } from "playwright";
 import { config } from "../config.js";
+import { CLAIM_STATUS, createClaimResult } from "./claim.js";
 
-export async function getSteamPriceByName(gameName) {
-  if (!gameName || gameName === "未知遊戲") return "";
+const storageState = process.env.STEAM_STORAGE_STATE || "auth/steam.json";
+
+export async function claimSteam(game) {
+  if (!game?.link) {
+    return createClaimResult({
+      status: CLAIM_STATUS.FAILED,
+      platform: "Steam",
+      game,
+      message: "缺少 Steam 商品網址",
+    });
+  }
+
+  const browser = await chromium.launch({ headless: true });
 
   try {
-    const url =
-      `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(gameName)}&l=${encodeURIComponent(config.steamLanguage)}&cc=${config.steamCountry}`;
+    const context = await browser.newContext({
+      storageState,
+    });
+    const page = await context.newPage();
 
-    const response = await fetch(url);
-    if (!response.ok) return "";
+    await page.goto(game.link, {
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
+    });
 
-    const data = await response.json();
-    const price = data?.items?.[0]?.price;
+    const currentUrl = page.url();
+    const title = await page.title();
 
-    if (!price || typeof price.initial !== "number") return "";
-    return `NT$ ${price.initial / 100}`;
+    if (/login|signin/i.test(currentUrl)) {
+      return createClaimResult({
+        status: CLAIM_STATUS.FAILED,
+        platform: "Steam",
+        game,
+        message: "Steam 尚未登入，請先建立 storage state",
+      });
+    }
+
+    return createClaimResult({
+      status: CLAIM_STATUS.READY,
+      platform: "Steam",
+      game,
+      message: `已開啟 Steam 商品頁：${title || currentUrl}`,
+    });
   } catch (error) {
-    console.error("Steam API error:", error);
-    return "";
+    return createClaimResult({
+      status: CLAIM_STATUS.FAILED,
+      platform: "Steam",
+      game,
+      message: `Steam 頁面操作失敗：${error.message}`,
+    });
+  } finally {
+    await browser.close();
   }
 }
