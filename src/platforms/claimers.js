@@ -1,9 +1,11 @@
 import { createNotImplementedClaim } from "./claim.js";
 import { SUPPORTED_PLATFORMS } from "./index.js";
 import { claimSteam } from "./steam.js";
+import { claimEpic } from "./epic.js";
 
 const claimers = {
   Steam: claimSteam,
+  "Epic Games": claimEpic,
 };
 
 for (const platform of SUPPORTED_PLATFORMS) {
