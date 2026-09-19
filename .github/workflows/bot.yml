@@ -62,7 +62,7 @@ jobs:
       - name: Restore GOG login state
         run: |
           if [ -z "$GOG_STORAGE_STATE_B64" ]; then
-            echo "GOG_STORAGE_STATE_B64 not configured, skip GOG login state"
+            echo "GOG_STORAGE_STATE_B64 not configured, skip GOG Games login state"
             exit 0
           fi
           mkdir -p auth
@@ -79,6 +79,26 @@ jobs:
           echo "$STEAM_STORAGE_STATE_B64" | base64 --decode > auth/steam.json
         env:
           STEAM_STORAGE_STATE_B64: ${{ secrets.STEAM_STORAGE_STATE_B64 }}
+      - name: Restore DLsite login state
+        run: |
+          if [ -z "$DLSITE_STORAGE_STATE_B64" ]; then
+            echo "DLSITE_STORAGE_STATE_B64 not configured, skip DLsite login state"
+            exit 0
+          fi
+          mkdir -p auth
+          echo "$DLSITE_STORAGE_STATE_B64" | base64 --decode > auth/dlsite.json
+        env:
+          DLSITE_STORAGE_STATE_B64: ${{ secrets.DLSITE_STORAGE_STATE_B64 }}
+      - name: Restore Ubisoft Connect login state
+        run: |
+          if [ -z "$UBISOFT_STORAGE_STATE_B64" ]; then
+            echo "UBISOFT_STORAGE_STATE_B64 not configured, skip Ubisoft Connect login state"
+            exit 0
+          fi
+          mkdir -p auth
+          echo "$UBISOFT_STORAGE_STATE_B64" | base64 --decode > auth/ubisoft.json
+        env:
+          UBISOFT_STORAGE_STATE_B64: ${{ secrets.UBISOFT_STORAGE_STATE_B64 }}
       - name: Run manual claim dry-run test
         if: ${{ inputs.claim_test_platform != '' && inputs.claim_test_url != '' }}
         run: npm run claim:dry-run -- "${{ inputs.claim_test_platform }}" "${{ inputs.claim_test_url }}" "${{ inputs.claim_test_name }}"
