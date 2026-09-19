@@ -2,19 +2,22 @@
 
 ## Current
 
-- [ ] 建立 Node.js 專案基礎
-- [ ] 將目前 GAS 功能整理成可移植的規格
-- [ ] 實作 4Gamers RSS 來源
-- [ ] 實作限免文章篩選
-- [ ] 實作遊戲資訊解析
-- [ ] 實作 Discord 通知
+- [x] 建立 Node.js 專案基礎
+- [x] 將目前 GAS 功能整理成可移植的規格
+- [x] 實作 4Gamers RSS 來源
+- [x] 實作限免文章篩選
+- [x] 實作遊戲資訊解析
+- [x] 實作 Discord 通知
+- [x] GitHub Actions 基礎執行
 - [ ] 確認新版本與 GAS 目前行為一致
+- [ ] 改善文章／遊戲層級的重複處理
 
 ## AI
 
-- [ ] Gemini 遊戲資訊解析
-- [ ] 遊戲與商店 URL 配對
-- [ ] AI 解析失敗處理
+- [x] Gemini 遊戲資訊解析
+- [x] 遊戲與商店 URL 配對
+- [x] AI 解析失敗處理
+- [ ] 強化 AI 對平台與永久領取／免費試玩的判斷
 
 ## Playwright
 
@@ -27,12 +30,15 @@
 
 ## Platforms
 
-- [ ] Epic Games
 - [ ] Steam
+- [ ] GOG
 - [ ] DLsite
+- [ ] Epic Games
+- [ ] Ubisoft Connect
 
 ## Infrastructure
 
-- [ ] GitHub Actions
-- [ ] Secrets 管理
+- [x] GitHub Actions
+- [x] Secrets 管理
 - [ ] 日誌與錯誤通知
+- [ ] 失敗後的自動重試
