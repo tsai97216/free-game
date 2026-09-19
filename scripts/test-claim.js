@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { claimGame } from "../src/platforms/claimers.js";
 
 const [platform, link, name = "Manual Claim Test"] = process.argv.slice(2);
 
@@ -9,6 +8,8 @@ if (!platform || !link) {
 }
 
 process.env.CLAIM_DRY_RUN = "true";
+
+const { claimGame } = await import("../src/platforms/claimers.js");
 
 const result = await claimGame({
   name,
