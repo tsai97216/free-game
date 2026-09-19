@@ -57,4 +57,4 @@
 - 平台固定保留：Steam、GOG、DLsite、Epic Games、Ubisoft Connect。
 - Bot 目前使用 GitHub Actions，預定每 10 分鐘執行一次。
 - `AUTO_CLAIM=false` 為目前安全預設。
-- Steam 是第一個實作 Claim 的平台，其餘平台先保留路由與未實作狀態。
+- Steam 與 Epic Games 目前已有基礎 Claim 流程，其餘平台先保留路由與安全 stub。
