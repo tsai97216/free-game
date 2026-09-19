@@ -3,7 +3,7 @@ name: Free Game Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "3-59/10 * * * *"
 
 concurrency:
   group: free-game-bot
