@@ -91,7 +91,7 @@ Claim 流程與通知流程分離：
 
 `.github/workflows/bot.yml`
 
-- main push
+- main push（忽略僅由 `data/processed.json` 產生的 push，避免 Bot 自我觸發）
 - workflow_dispatch
 - 每 10 分鐘 schedule
 - Node.js 20
