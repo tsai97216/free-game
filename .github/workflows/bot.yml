@@ -9,22 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       claim_dry_run:
-        description: "僅檢查 DLsite 商品頁，不執行領取"
+        description: "執行 Claim 流程測試（目前 DLsite 尚未實作實際領取）"
         required: false
         default: false
         type: boolean
-      claim_test_platform:
-        description: "手動 Claim Dry Run 平台，固定使用 DLsite"
-        required: false
-        default: "DLsite"
-        type: string
       claim_test_url:
-        description: "手動 Claim Dry Run 的 DLsite 商品網址"
+        description: "手動 Claim 流程測試的 DLsite 商品網址"
         required: false
         default: ""
         type: string
       claim_test_name:
-        description: "手動 Claim Dry Run 的商品名稱"
+        description: "手動 Claim 流程測試的商品名稱"
         required: false
         default: "Manual DLsite Test"
         type: string
@@ -44,22 +39,27 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - run: npm install
       - run: npx playwright install --with-deps chromium
+
       - name: Restore DLsite login state
         run: |
           if [ -z "$DLSITE_STORAGE_STATE_B64" ]; then
             echo "DLSITE_STORAGE_STATE_B64 not configured, skip DLsite login state"
             exit 0
           fi
+
           mkdir -p auth
           echo "$DLSITE_STORAGE_STATE_B64" | base64 --decode > auth/dlsite.json
         env:
           DLSITE_STORAGE_STATE_B64: ${{ secrets.DLSITE_STORAGE_STATE_B64 }}
-      - name: Run manual claim dry-run test
+
+      - name: Run manual claim flow test
         if: ${{ inputs.claim_test_url != '' }}
         run: npm run claim:dry-run -- "DLsite" "${{ inputs.claim_test_url }}" "${{ inputs.claim_test_name }}"
         env:
@@ -67,6 +67,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           AUTO_CLAIM: "false"
           CLAIM_DRY_RUN: "true"
+
       - name: Run normal bot
         if: ${{ inputs.claim_test_url == '' }}
         run: npm start
@@ -75,6 +76,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           AUTO_CLAIM: "false"
           CLAIM_DRY_RUN: ${{ inputs.claim_dry_run || false }}
+
       - name: Commit processed state
         if: ${{ inputs.claim_test_url == '' }}
         run: |
@@ -82,6 +84,7 @@ jobs:
             echo "No processed state changes"
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/processed.json
