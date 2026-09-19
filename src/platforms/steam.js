@@ -117,7 +117,16 @@ export async function claimSteam(game) {
       .filter({ hasText: /add to account|加入帳號|加入帳戶/i })
       .first();
 
-    if (config.claimDryRun) {\n      return createClaimResult({\n        status: CLAIM_STATUS.READY,\n        platform: "Steam",\n        game,\n        message: "Dry run：已開啟 Steam 商品頁並確認可免費取得，未執行領取操作",\n      });\n    }\n\n    if (!(await addToAccountButton.count())) {
+    if (config.claimDryRun) {
+      return createClaimResult({
+        status: CLAIM_STATUS.READY,
+        platform: "Steam",
+        game,
+        message: "Dry run：已開啟 Steam 商品頁並確認可免費取得，未執行領取操作",
+      });
+    }
+
+    if (!(await addToAccountButton.count())) {
       return createClaimResult({
         status: CLAIM_STATUS.READY,
         platform: "Steam",
