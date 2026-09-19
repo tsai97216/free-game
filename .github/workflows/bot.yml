@@ -13,6 +13,21 @@ on:
         required: false
         default: false
         type: boolean
+      claim_test_platform:
+        description: "手動 Claim Dry Run 平台，例如 GOG / Epic Games / Steam"
+        required: false
+        default: ""
+        type: string
+      claim_test_url:
+        description: "手動 Claim Dry Run 的商品網址"
+        required: false
+        default: ""
+        type: string
+      claim_test_name:
+        description: "手動 Claim Dry Run 的遊戲名稱"
+        required: false
+        default: "Manual Claim Test"
+        type: string
   schedule:
     - cron: "*/10 * * * *"
 
@@ -64,6 +79,14 @@ jobs:
           echo "$STEAM_STORAGE_STATE_B64" | base64 --decode > auth/steam.json
         env:
           STEAM_STORAGE_STATE_B64: ${{ secrets.STEAM_STORAGE_STATE_B64 }}
+      - name: Run manual claim dry-run test
+        if: ${{ inputs.claim_test_platform != '' && inputs.claim_test_url != '' }}
+        run: npm run claim:dry-run -- "${{ inputs.claim_test_platform }}" "${{ inputs.claim_test_url }}" "${{ inputs.claim_test_name }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AUTO_CLAIM: "false"
+          CLAIM_DRY_RUN: "true"
       - run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
