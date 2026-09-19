@@ -1,20 +1,22 @@
-name: Test
+name: Free Game Bot
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
 
 concurrency:
-  group: test-${{ github.ref }}
-  cancel-in-progress: true
+  group: free-game-bot
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  test:
+  run:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,7 +25,11 @@ jobs:
           node-version: 20
 
       - run: npm install
-      - run: npm test
+
+      - run: npm start
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Commit processed state
         run: |
