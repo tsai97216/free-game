@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  normalizeGame,
-  isSupportedStoreUrl,
-} from "../src/core/validate.js";
+import { promises as fs } from "node:fs";
+import { normalizeGame, isSupportedStoreUrl } from "../src/core/validate.js";
 import {
   isSupportedPlatform,
   normalizePlatform,
@@ -23,46 +21,15 @@ test("all intended platforms are retained", () => {
 
 test("normalizeGame rejects failed, temporary, uncertain, or unsupported AI results", () => {
   assert.equal(normalizeGame({ name: "解析失敗", availability: "永久加入" }), null);
-  assert.equal(
-    normalizeGame({
-      name: "Temporary Game",
-      platform: "Steam",
-      availability: "暫時遊玩",
-    }),
-    null
-  );
-  assert.equal(
-    normalizeGame({
-      name: "Uncertain Game",
-      platform: "Steam",
-      availability: "不確定",
-    }),
-    null
-  );
-  assert.equal(
-    normalizeGame({
-      name: "Switch Game",
-      platform: "Nintendo Switch",
-      availability: "永久加入",
-    }),
-    null
-  );
+  assert.equal(normalizeGame({ name: "Temporary Game", platform: "Steam", availability: "暫時遊玩" }), null);
+  assert.equal(normalizeGame({ name: "Uncertain Game", platform: "Steam", availability: "不確定" }), null);
+  assert.equal(normalizeGame({ name: "Switch Game", platform: "Nintendo Switch", availability: "永久加入" }), null);
 });
 
 test("normalizeGame requires explicit permanent availability", () => {
+  assert.equal(normalizeGame({ name: "Missing Classification", platform: "Steam" }), null);
   assert.equal(
-    normalizeGame({
-      name: "Missing Classification",
-      platform: "Steam",
-    }),
-    null
-  );
-  assert.equal(
-    normalizeGame({
-      name: "Permanent Game",
-      platform: "Steam",
-      availability: "永久加入",
-    }).availability,
+    normalizeGame({ name: "Permanent Game", platform: "Steam", availability: "永久加入" }).availability,
     "永久加入"
   );
 });
@@ -104,4 +71,13 @@ test("4Gamers title filter excludes temporary free-play articles", () => {
   assert.equal(shouldProcessTitle("本週限時免費遊戲"), true);
   assert.equal(shouldProcessTitle("限時免費遊玩：某款 Switch 遊戲"), false);
   assert.equal(shouldProcessTitle("一般遊戲新聞"), false);
+});
+
+test("processed state keeps article and game records separately", async () => {
+  const path = new URL("../data/processed.json", import.meta.url);
+  const raw = await fs.readFile(path, "utf8");
+  const data = JSON.parse(raw);
+
+  assert.ok(Array.isArray(data.articles));
+  assert.ok(Array.isArray(data.games));
 });
