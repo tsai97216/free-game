@@ -28,6 +28,10 @@ test("claim architecture retains every supported platform", () => {
   }
 });
 
+test("Steam claimer is registered", () => {
+  assert.equal(typeof getClaimer("Steam"), "function");
+});
+
 test("claimers are safe stubs until platform automation is implemented", async () => {
   const result = await claimGame({
     name: "Test Game",
