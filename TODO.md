@@ -40,7 +40,8 @@
 
 ## Platforms
 
-- [ ] GOG Claim
+- [x] GOG Claim 基礎流程
+- [ ] GOG 實際 Claim 流程測試
 - [ ] DLsite Claim
 - [x] Epic Games Claim 基礎流程
 - [ ] 實際 Epic Games Claim 流程測試
