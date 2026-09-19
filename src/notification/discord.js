@@ -7,8 +7,9 @@ export async function sendGameToDiscord(game, entryUrl, imageUrl) {
       ? game.link
       : entryUrl;
 
-  const platform = game.platform || "Epic Games";
-  const steamPrice = await getSteamPriceByName(game.name);
+  const platform = game.platform || "未提供";
+  const steamPrice =
+    platform === "Steam" ? await getSteamPriceByName(game.name) : "";
   const priceDisplay = steamPrice ? `~~${steamPrice}~~ **Free**` : "**Free**";
 
   const payload = {
