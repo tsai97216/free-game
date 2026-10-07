@@ -144,6 +144,28 @@ class AITests(unittest.TestCase):
         games = GeminiExtractor(FakeHttp(), "key", "gemini-test").extract(article)
         self.assertEqual(games[0].name, "Example")
 
+    def test_store_index_maps_to_candidate_url(self):
+        from free_game.ai import GeminiExtractor
+
+        class FakeHttp:
+            def post_json(self, url, payload, timeout=45, headers=None):
+                body = json.dumps({
+                    "candidates": [{"content": {"parts": [{
+                        "text": "[{\"name\":\"Example\",\"store_index\":2}]"
+                    }]}}]
+                }).encode()
+                return 200, body, {}
+
+        article = parse_article(
+            b'<html><body>'
+            b'<a href="https://store.steampowered.com/app/1/">One</a>'
+            b'<a href="https://store.epicgames.com/p/example">Example</a>'
+            b'</body></html>',
+            "https://example.com/article", "Example",
+        )
+        games = GeminiExtractor(FakeHttp(), "key", "gemini-test").extract(article)
+        self.assertEqual(games[0].link, "https://store.epicgames.com/p/example")
+
     def test_invalid_store_link_is_rejected(self):
         from free_game.ai import GeminiExtractor
 
