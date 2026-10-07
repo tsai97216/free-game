@@ -121,84 +121,62 @@ class CoreStateTests(unittest.TestCase):
 
 
 class DiscordTests(unittest.TestCase):
-    def test_sender_uses_redesigned_embed_layout(self):
+    def _send(self, game):
         class FakeHttp:
             def post_json(self, url, payload):
                 self.payload = payload
                 return 204, b"", {}
 
         http = FakeHttp()
+        DiscordSender(http, "https://discord.example/webhook").send(
+            game, "Article", "https://example.com/article"
+        )
+        return http.payload
+
+    def test_sender_uses_simplified_embed_layout(self):
         game = Game(
             name="Example",
             platform="Steam",
-            deadline="7日內轉付費",
+            deadline="7日內",
             genre="生態模擬",
-            gameplay="經營生態系統",
-            rating="極度好評",
+            rating="None",
             brief="建立並維持一個完整的生態系統。",
             link="https://store.steampowered.com/app/1/",
             image="https://example.com/image.jpg",
-            steam_price="NT$ 300.00",
-        )
-        DiscordSender(http, "https://discord.example/webhook").send(
-            game, "Article", "https://example.com/article"
+            steam_price="免費",
         )
 
-        embed = http.payload["embeds"][0]
-        self.assertEqual(embed["title"], "🎁 Example")
+        embed = self._send(game)["embeds"][0]
+        self.assertEqual(embed["title"], "Example")
         self.assertEqual(embed["url"], game.link)
-        self.assertEqual(embed["color"], 0x5865F2)
-        self.assertIn("~~NT$ 300.00~~ → **免費**", embed["description"])
-        self.assertIn("7日內轉付費", embed["description"])
+        self.assertIn("**原價** 免費　**期限** 7日內", embed["description"])
+        self.assertIn("**平台** Steam　**遊戲類型** 生態模擬", embed["description"])
+        self.assertIn("**介紹** 建立並維持一個完整的生態系統。", embed["description"])
+        self.assertIn("**玩家評價** None", embed["description"])
         self.assertEqual(embed["image"]["url"], game.image)
-        self.assertEqual(
-            [field["name"] for field in embed["fields"]],
-            [
-                "⏳ 免費期限",
-                "🎮 平台",
-                "🧩 遊戲類型",
-                "⭐ 玩家評價",
-                "🕹️ 玩法",
-                "📰 文章來源",
-                "🛒 立即領取",
-            ],
-        )
+        self.assertEqual(embed["footer"]["text"], "Free Game Notifier")
+        self.assertNotIn("fields", embed)
 
-    def test_sender_omits_empty_optional_fields(self):
-        class FakeHttp:
-            def post_json(self, url, payload):
-                self.payload = payload
-                return 204, b"", {}
-
-        http = FakeHttp()
+    def test_sender_adds_two_link_buttons(self):
         game = Game(
             name="Example",
-            platform="Steam",
-            deadline="今天",
             link="https://store.steampowered.com/app/1/",
         )
-        DiscordSender(http, "https://discord.example/webhook").send(
-            game, "Article", "https://example.com/article"
-        )
 
-        field_names = [field["name"] for field in http.payload["embeds"][0]["fields"]]
-        self.assertNotIn("🧩 遊戲類型", field_names)
-        self.assertNotIn("⭐ 玩家評價", field_names)
-        self.assertNotIn("🕹️ 玩法", field_names)
+        components = self._send(game)["components"]
+        buttons = components[0]["components"]
+        self.assertEqual(len(buttons), 2)
+        self.assertEqual(buttons[0]["label"], "4Gamers 傳送門")
+        self.assertEqual(buttons[0]["url"], "https://example.com/article")
+        self.assertEqual(buttons[0]["style"], 5)
+        self.assertEqual(buttons[1]["label"], "開啟商店頁面")
+        self.assertEqual(buttons[1]["url"], game.link)
+        self.assertEqual(buttons[1]["style"], 5)
 
     def test_sender_disables_mentions(self):
-        class FakeHttp:
-            def post_json(self, url, payload):
-                self.payload = payload
-                return 204, b"", {}
-
-        http = FakeHttp()
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        DiscordSender(http, "https://discord.example/webhook").send(
-            game, "Article", "https://example.com/article"
-        )
-        self.assertEqual(http.payload["allowed_mentions"], {"parse": []})
-
+        payload = self._send(game)
+        self.assertEqual(payload["allowed_mentions"], {"parse": []})
 
 
 class AITests(unittest.TestCase):
