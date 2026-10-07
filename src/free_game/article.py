@@ -15,7 +15,7 @@ class Parser(HTMLParser):
         self.links = []
         self.contexts = {}
         self.image = ""
-        self.anchor_depth = 0
+        self.anchor_url = None
         self.anchor_text = []
 
     def handle_starttag(self, tag, attrs):
@@ -27,19 +27,20 @@ class Parser(HTMLParser):
         if tag == "meta" and a.get("property") == "og:image" and a.get("content"):
             self.image = urljoin(self.base, a["content"])
         if tag == "a" and a.get("href"):
-            self.anchor_depth += 1
+            self.anchor_url = self._normalized_link(a["href"])
             self.anchor_text = []
-            self._add_link(a["href"])
+            if self.anchor_url:
+                self._add_link(self.anchor_url)
         if tag == "iframe" and a.get("src"):
             self._add_link(a["src"])
 
     def handle_endtag(self, tag):
         if tag in {"script", "style", "noscript", "svg"}:
             self.skip = False
-        if tag == "a" and self.anchor_depth:
-            self.anchor_depth -= 1
-            if self.links and self.anchor_text:
-                self.contexts[self.links[-1]] = " ".join(self.anchor_text)
+        if tag == "a" and self.anchor_url:
+            if self.anchor_text:
+                self.contexts[self.anchor_url] = " ".join(self.anchor_text)
+            self.anchor_url = None
             self.anchor_text = []
         if tag == "body":
             self.body = False
@@ -49,12 +50,16 @@ class Parser(HTMLParser):
         if not text or not self.body or self.skip:
             return
         self.parts.append(text)
-        if self.anchor_depth:
+        if self.anchor_url:
             self.anchor_text.append(text)
 
-    def _add_link(self, raw):
+    def _normalized_link(self, raw):
         url = normalize_store_url(urljoin(self.base, unescape(raw)))
-        if urlparse(url).netloc.lower() in ALLOWED_HOSTS and url not in self.links:
+        return url if urlparse(url).netloc.lower() in ALLOWED_HOSTS else ""
+
+    def _add_link(self, raw):
+        url = self._normalized_link(raw)
+        if url and url not in self.links:
             self.links.append(url)
 
     def store_links(self):
