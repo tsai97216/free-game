@@ -29,28 +29,33 @@ def main():
             )
             games = ai.extract(article)
 
+            article_failed = False
             for game in games:
                 key = state.game_key(item.url, game)
                 if key in processed:
                     continue
+                try:
+                    price = steam.resolve(game.name, game.link)
+                    game = game.__class__(
+                        name=game.name,
+                        platform=game.platform,
+                        deadline=game.deadline,
+                        genre=game.genre,
+                        gameplay=game.gameplay,
+                        rating=game.rating,
+                        brief=game.brief,
+                        link=game.link,
+                        image=game.image,
+                        steam_price=price,
+                    )
+                    discord.send(game, article.title)
+                    processed.add(key)
+                except Exception as exc:
+                    article_failed = True
+                    print(f"[ERROR] {item.url} | {game.name}: {exc}")
 
-                price = steam.resolve(game.name, game.link)
-                game = game.__class__(
-                    name=game.name,
-                    platform=game.platform,
-                    deadline=game.deadline,
-                    genre=game.genre,
-                    gameplay=game.gameplay,
-                    rating=game.rating,
-                    brief=game.brief,
-                    link=game.link,
-                    image=game.image,
-                    steam_price=price,
-                )
-                discord.send(game, article.title)
-                processed.add(key)
-
-            processed.add(state.article_key(item.url))
+            if not article_failed:
+                processed.add(state.article_key(item.url))
             state.save(processed)
         except Exception as e:
             print(f"[ERROR] {item.url}: {e}")
