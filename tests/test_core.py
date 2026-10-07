@@ -123,5 +123,47 @@ class DiscordTests(unittest.TestCase):
         self.assertEqual(http.payload["allowed_mentions"], {"parse": []})
 
 
+
+class AITests(unittest.TestCase):
+    def test_markdown_json_fence_is_removed(self):
+        from free_game.ai import GeminiExtractor
+
+        class FakeHttp:
+            def post_json(self, url, payload, timeout=45):
+                body = json.dumps({
+                    "candidates": [{"content": {"parts": [{
+                        "text": "```json\\n[{\\"name\\":\\"Example\\",\\"link\\":\\"https://store.steampowered.com/app/1/\\"}]\\n```"
+                    }]}}]
+                }).encode()
+                return 200, body, {}
+
+        article = parse_article(
+            b'<html><body><a href="https://store.steampowered.com/app/1/">Example</a></body></html>',
+            "https://example.com/article", "Example",
+        )
+        games = GeminiExtractor(FakeHttp(), "key", "gemini-test").extract(article)
+        self.assertEqual(games[0].name, "Example")
+
+    def test_invalid_store_link_is_rejected(self):
+        from free_game.ai import GeminiExtractor
+
+        class FakeHttp:
+            def post_json(self, url, payload, timeout=45):
+                body = json.dumps({
+                    "candidates": [{"content": {"parts": [{
+                        "text": "[{\\"name\\":\\"Example\\",\\"link\\":\\"https://evil.example/\\"}]"
+                    }]}}]
+                }).encode()
+                return 200, body, {}
+
+        article = parse_article(
+            b'<html><body><a href="https://store.steampowered.com/app/1/">Example</a></body></html>',
+            "https://example.com/article", "Example",
+        )
+        self.assertEqual(
+            GeminiExtractor(FakeHttp(), "key", "gemini-test").extract(article),
+            [],
+        )
+
 if __name__ == "__main__":
     unittest.main()
