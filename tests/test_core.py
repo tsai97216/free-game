@@ -1,10 +1,13 @@
+import json
+import tempfile
 import unittest
 
 from free_game.article import normalize_store_url, parse_article
-from free_game.stores import SteamPriceResolver
-from free_game.state import StateStore
-from free_game.models import Game
 from free_game.discord import DiscordSender
+from free_game.models import Game
+from free_game.state import StateStore
+from free_game.stores import SteamPriceResolver
+
 
 class ArticleTests(unittest.TestCase):
     def test_steam_widget_is_normalized(self):
@@ -20,8 +23,13 @@ class ArticleTests(unittest.TestCase):
         <iframe src="https://store.steampowered.com/widget/12345/"></iframe>
         </body></html>
         """
-        article = parse_article(html, "https://www.4gamers.com.tw/article/x", "Example")
-        self.assertEqual(article.links, ("https://store.steampowered.com/app/12345/",))
+        article = parse_article(
+            html, "https://www.4gamers.com.tw/article/x", "Example"
+        )
+        self.assertEqual(
+            article.links,
+            ("https://store.steampowered.com/app/12345/",),
+        )
 
     def test_anchor_context_is_preserved(self):
         html = b"""
@@ -29,8 +37,11 @@ class ArticleTests(unittest.TestCase):
         <a href="https://store.epicgames.com/p/example">Example Game</a>
         </body></html>
         """
-        article = parse_article(html, "https://www.4gamers.com.tw/article/x", "Example")
+        article = parse_article(
+            html, "https://www.4gamers.com.tw/article/x", "Example"
+        )
         self.assertEqual(article.store_links[0].context, "Example Game")
+
 
 class SteamTests(unittest.TestCase):
     def test_best_match_prefers_exact_title(self):
@@ -41,30 +52,76 @@ class SteamTests(unittest.TestCase):
         best = SteamPriceResolver._best_match("Example Game", items)
         self.assertEqual(best["name"], "Example Game")
 
+    def test_best_match_rejects_unrelated_title(self):
+        items = [{"name": "Completely Different Game"}]
+        self.assertEqual(
+            SteamPriceResolver._best_match("Example Game", items),
+            {},
+        )
+
+    def test_price_uses_original_price_when_discounted(self):
+        data = {
+            "price_overview": {
+                "initial_formatted": "NT$ 300.00",
+                "final_formatted": "NT$ 150.00",
+                "discount_percent": 50,
+            }
+        }
+        self.assertEqual(
+            SteamPriceResolver._price(data),
+            "NT$ 300.00",
+        )
+
+    def test_price_uses_final_price_without_discount(self):
+        data = {
+            "price_overview": {
+                "initial_formatted": "NT$ 300.00",
+                "final_formatted": "NT$ 300.00",
+                "discount_percent": 0,
+            }
+        }
+        self.assertEqual(
+            SteamPriceResolver._price(data),
+            "NT$ 300.00",
+        )
+
+
+class StateTests(unittest.TestCase):
     def test_state_preserves_recent_insertion_order(self):
-        import tempfile
         with tempfile.TemporaryDirectory() as d:
             store = StateStore(d + "/state.json", 2)
             store.save({"old", "new"})
             store.save({"new", "latest"})
             self.assertEqual(store.load(), {"new", "latest"})
 
+
+class CoreStateTests(unittest.TestCase):
     def test_game_key_and_legacy_article_key(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
         key = StateStore.game_key("https://example.com/article", game)
         self.assertTrue(key.startswith("game|"))
         values = {StateStore.article_key("https://example.com/article")}
-        self.assertTrue(StateStore.is_article_processed(values, "https://example.com/article"))
+        self.assertTrue(
+            StateStore.is_article_processed(
+                values, "https://example.com/article"
+            )
+        )
+
 
 class DiscordTests(unittest.TestCase):
-    def test_sender_accepts_article_url(self):
+    def test_sender_disables_mentions(self):
         class FakeHttp:
             def post_json(self, url, payload):
+                self.payload = payload
                 return 204, b"", {}
+
+        http = FakeHttp()
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        DiscordSender(FakeHttp(), "https://discord.example/webhook").send(
+        DiscordSender(http, "https://discord.example/webhook").send(
             game, "Article", "https://example.com/article"
         )
+        self.assertEqual(http.payload["allowed_mentions"], {"parse": []})
+
 
 if __name__ == "__main__":
     unittest.main()
