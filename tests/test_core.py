@@ -144,7 +144,7 @@ class AITests(unittest.TestCase):
             def post_json(self, url, payload, timeout=45, headers=None):
                 body = json.dumps({
                     "candidates": [{"content": {"parts": [{
-                        "text": "```json\\n[{\\"name\\":\\"Example\\",\\"link\\":\\"https://store.steampowered.com/app/1/\\"}]\\n```"
+                        "text": "```json\n[{\"name\":\"Example\",\"store_index\":1}]\n```"
                     }]}}]
                 }).encode()
                 return 200, body, {}
@@ -185,7 +185,7 @@ class AITests(unittest.TestCase):
             def post_json(self, url, payload, timeout=45, headers=None):
                 body = json.dumps({
                     "candidates": [{"content": {"parts": [{
-                        "text": "[{\\"name\\":\\"Example\\",\\"link\\":\\"https://evil.example/\\"}]"
+                        "text": "[{\"name\":\"Example\",\"store_index\":99}]"
                     }]}}]
                 }).encode()
                 return 200, body, {}
