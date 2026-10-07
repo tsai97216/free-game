@@ -72,6 +72,18 @@ class SteamTests(unittest.TestCase):
             "NT$ 300.00",
         )
 
+    def test_epic_link_does_not_trigger_steam_lookup(self):
+        class FakeHttp:
+            def get(self, url):
+                raise AssertionError("Steam API must not be called for Epic links")
+
+        self.assertEqual(
+            SteamPriceResolver(FakeHttp()).resolve(
+                "Example Game", "https://store.epicgames.com/p/example"
+            ),
+            "",
+        )
+
     def test_price_uses_final_price_without_discount(self):
         data = {
             "price_overview": {
