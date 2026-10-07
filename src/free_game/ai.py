@@ -7,7 +7,9 @@ class GeminiExtractor:
         self.http, self.api_key, self.model = http, api_key, model
 
     def extract(self, article):
-        if not self.api_key or not article.store_links:
+        if not self.api_key:
+            raise RuntimeError("GEMINI_API_KEY is not configured")
+        if not article.store_links:
             return []
         candidates = [f"[{i}] {item.url} | {item.context}" for i, item in enumerate(article.store_links, 1)]
         prompt = (
@@ -20,11 +22,18 @@ class GeminiExtractor:
         url = "https://generativelanguage.googleapis.com/v1beta/models/" + self.model + ":generateContent?key=" + self.api_key
         payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"}}
         _, body, _ = self.http.post_json(url, payload, timeout=45)
-        raw = json.loads(body)["candidates"][0]["content"]["parts"][0]["text"].strip()
+        try:
+            response = json.loads(body)
+            raw = response["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Gemini returned an invalid response") from exc
         raw = re.sub(r"^```(?:json)?\\s*|\\s*```$", "", raw, flags=re.I)
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Gemini returned invalid JSON") from exc
         if not isinstance(data, list):
-            raise ValueError("Gemini JSON is not a list")
+            raise RuntimeError("Gemini JSON is not a list")
         valid = {item.url for item in article.store_links}
         result = []
         for item in data:
