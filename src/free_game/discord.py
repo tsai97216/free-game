@@ -1,17 +1,23 @@
 from datetime import datetime, timezone
-from .http import HttpClient
+
 from .models import Game
+
 
 def clip(value, n):
     value = value.strip()
-    return value if len(value) <= n else value[:n - 1] + "…"
+    return value if len(value) <= n else value[: n - 1] + "…"
+
 
 class DiscordSender:
     def __init__(self, http, webhook):
         self.http, self.webhook = http, webhook
 
     def send(self, game, article_title, article_url):
-        price = f"~~{game.steam_price}~~ **Free**" if game.steam_price else "**Free**"
+        price = (
+            f"~~{game.steam_price}~~ **Free**"
+            if game.steam_price
+            else "**Free**"
+        )
         description = (
             f"{price} until {game.deadline or '未提供'}\n\n"
             f"🎮 **遊戲類型**：{game.genre or '未提供'}\n"
@@ -20,8 +26,16 @@ class DiscordSender:
             f"> {game.brief or '限時免費活動'}"
         )
         fields = [
-            {"name": "領取平台", "value": clip(game.platform or "未知", 1024), "inline": True},
-            {"name": "文章來源", "value": f"[4Gamers 傳送門]({article_url})", "inline": True},
+            {
+                "name": "領取平台",
+                "value": clip(game.platform or "未知", 1024),
+                "inline": True,
+            },
+            {
+                "name": "文章來源",
+                "value": f"[4Gamers 傳送門]({article_url})",
+                "inline": True,
+            },
         ]
         embed = {
             "title": clip(f"🎁 限時免費情報：{game.name}", 256),
@@ -33,6 +47,9 @@ class DiscordSender:
         }
         if game.image:
             embed["image"] = {"url": game.image}
-        status, _, _ = self.http.post_json(self.webhook, {"embeds": [embed]})
-        if status >= 300:
-            raise RuntimeError(f"Discord HTTP {status}")
+
+        payload = {
+            "allowed_mentions": {"parse": []},
+            "embeds": [embed],
+        }
+        self.http.post_json(self.webhook, payload)
