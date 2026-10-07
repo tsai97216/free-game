@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import Game
 
@@ -6,6 +7,15 @@ from .models import Game
 def clip(value, n):
     value = str(value or "").strip()
     return value if len(value) <= n else value[: n - 1] + "…"
+
+
+def enable_components(url):
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["with_components"] = "true"
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
+    )
 
 
 class DiscordSender:
@@ -21,10 +31,12 @@ class DiscordSender:
         rating = game.rating or "None"
 
         description = (
-            f"**原價** {clip(original_price, 200)}　**期限** {clip(deadline, 200)}\n"
-            f"**平台** {clip(platform, 200)}　**遊戲類型** {clip(genre, 200)}\n"
-            f"**介紹** {clip(brief, 1000)}\n"
-            f"**玩家評價** {clip(rating, 300)}"
+            f"💰 **原價**　{clip(original_price, 200)}\n"
+            f"⏳ **期限**　{clip(deadline, 200)}\n"
+            f"🎮 **平台**　{clip(platform, 200)}\n"
+            f"🧩 **遊戲類型**　{clip(genre, 200)}\n"
+            f"📝 **介紹**　{clip(brief, 1000)}\n"
+            f"⭐ **玩家評價**　{clip(rating, 300)}"
         )
 
         embed = {
@@ -50,16 +62,19 @@ class DiscordSender:
                             "type": 2,
                             "style": 5,
                             "label": "4Gamers 傳送門",
+                            "emoji": {"name": "🔗"},
                             "url": article_url,
                         },
                         {
                             "type": 2,
                             "style": 5,
                             "label": "開啟商店頁面",
+                            "emoji": {"name": "🛒"},
                             "url": game.link,
                         },
                     ],
                 }
             ],
         }
-        self.http.post_json(self.webhook, payload)
+
+        self.http.post_json(enable_components(self.webhook), payload)
