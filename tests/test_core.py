@@ -4,6 +4,7 @@ from free_game.article import normalize_store_url, parse_article
 from free_game.stores import SteamPriceResolver
 from free_game.state import StateStore
 from free_game.models import Game
+from free_game.discord import DiscordSender
 
 class ArticleTests(unittest.TestCase):
     def test_steam_widget_is_normalized(self):
@@ -40,12 +41,30 @@ class SteamTests(unittest.TestCase):
         best = SteamPriceResolver._best_match("Example Game", items)
         self.assertEqual(best["name"], "Example Game")
 
+    def test_state_preserves_recent_insertion_order(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            store = StateStore(d + "/state.json", 2)
+            store.save({"old", "new"})
+            store.save({"new", "latest"})
+            self.assertEqual(store.load(), {"new", "latest"})
+
     def test_game_key_and_legacy_article_key(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
         key = StateStore.game_key("https://example.com/article", game)
         self.assertTrue(key.startswith("game|"))
         values = {StateStore.article_key("https://example.com/article")}
         self.assertTrue(StateStore.is_article_processed(values, "https://example.com/article"))
+
+class DiscordTests(unittest.TestCase):
+    def test_sender_accepts_article_url(self):
+        class FakeHttp:
+            def post_json(self, url, payload):
+                return 204, b"", {}
+        game = Game(name="Example", link="https://store.steampowered.com/app/1/")
+        DiscordSender(FakeHttp(), "https://discord.example/webhook").send(
+            game, "Article", "https://example.com/article"
+        )
 
 if __name__ == "__main__":
     unittest.main()
