@@ -8,21 +8,53 @@ from free_game.state import StateStore
 from free_game.stores import SteamPriceResolver
 
 def main():
-    http=HttpClient(USER_AGENT)
-    state=StateStore(STATE_FILE,MAX_PROCESSED); processed=state.load()
-    data,_=http.get(RSS_URL)
-    articles=[a for a in parse_rss(data) if is_free_game_article(a) and a.url not in processed]
-    ai=GeminiExtractor(http,GEMINI_API_KEY,GEMINI_MODEL); discord=DiscordSender(http,WEBHOOK_URL); steam=SteamPriceResolver(http)
-    changed=False
+    http = HttpClient(USER_AGENT)
+    state = StateStore(STATE_FILE, MAX_PROCESSED)
+    processed = state.load()
+    data, _ = http.get(RSS_URL)
+    articles = [
+        a for a in parse_rss(data)
+        if is_free_game_article(a) and not state.is_article_processed(processed, a.url)
+    ]
+
+    ai = GeminiExtractor(http, GEMINI_API_KEY, GEMINI_MODEL)
+    discord = DiscordSender(http, WEBHOOK_URL)
+    steam = SteamPriceResolver(http)
+
     for item in articles:
         try:
-            html,_=http.get(item.url); article=parse_article(html,item.url,item.title,item.summary,item.published)
-            for game in ai.extract(article):
-                price=steam.resolve(game.name,game.link)
-                game=game.__class__(name=game.name,platform=game.platform,deadline=game.deadline,genre=game.genre,gameplay=game.gameplay,rating=game.rating,brief=game.brief,link=game.link,image=game.image,steam_price=price)
-                discord.send(game,article.title)
-            processed.add(item.url); changed=True
-        except Exception as e: print(f"[ERROR] {item.url}: {e}")
-    if changed: state.save(processed)
+            html, _ = http.get(item.url)
+            article = parse_article(
+                html, item.url, item.title, item.summary, item.published
+            )
+            games = ai.extract(article)
 
-if __name__=="__main__": main()
+            for game in games:
+                key = state.game_key(item.url, game)
+                if key in processed:
+                    continue
+
+                price = steam.resolve(game.name, game.link)
+                game = game.__class__(
+                    name=game.name,
+                    platform=game.platform,
+                    deadline=game.deadline,
+                    genre=game.genre,
+                    gameplay=game.gameplay,
+                    rating=game.rating,
+                    brief=game.brief,
+                    link=game.link,
+                    image=game.image,
+                    steam_price=price,
+                )
+                discord.send(game, article.title)
+                processed.add(key)
+
+            processed.add(state.article_key(item.url))
+            state.save(processed)
+        except Exception as e:
+            print(f"[ERROR] {item.url}: {e}")
+            state.save(processed)
+
+if __name__ == "__main__":
+    main()
