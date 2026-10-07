@@ -124,6 +124,7 @@ class DiscordTests(unittest.TestCase):
     def _send(self, game):
         class FakeHttp:
             def post_json(self, url, payload):
+                self.url = url
                 self.payload = payload
                 return 204, b"", {}
 
@@ -146,13 +147,15 @@ class DiscordTests(unittest.TestCase):
             steam_price="免費",
         )
 
-        embed = self._send(game)["embeds"][0]
+        embed = self._send(game).payload["embeds"][0]
         self.assertEqual(embed["title"], "Example")
         self.assertEqual(embed["url"], game.link)
-        self.assertIn("**原價** 免費　**期限** 7日內", embed["description"])
-        self.assertIn("**平台** Steam　**遊戲類型** 生態模擬", embed["description"])
-        self.assertIn("**介紹** 建立並維持一個完整的生態系統。", embed["description"])
-        self.assertIn("**玩家評價** None", embed["description"])
+        self.assertIn("💰 **原價**　免費", embed["description"])
+        self.assertIn("⏳ **期限**　7日內", embed["description"])
+        self.assertIn("🎮 **平台**　Steam", embed["description"])
+        self.assertIn("🧩 **遊戲類型**　生態模擬", embed["description"])
+        self.assertIn("📝 **介紹**　建立並維持一個完整的生態系統。", embed["description"])
+        self.assertIn("⭐ **玩家評價**　None", embed["description"])
         self.assertEqual(embed["image"]["url"], game.image)
         self.assertEqual(embed["footer"]["text"], "Free Game Notifier")
         self.assertNotIn("fields", embed)
@@ -163,19 +166,22 @@ class DiscordTests(unittest.TestCase):
             link="https://store.steampowered.com/app/1/",
         )
 
-        components = self._send(game)["components"]
-        buttons = components[0]["components"]
+        http = self._send(game)
+        self.assertEqual(http.url, "https://discord.example/webhook?with_components=true")
+        buttons = http.payload["components"][0]["components"]
         self.assertEqual(len(buttons), 2)
         self.assertEqual(buttons[0]["label"], "4Gamers 傳送門")
+        self.assertEqual(buttons[0]["emoji"], {"name": "🔗"})
         self.assertEqual(buttons[0]["url"], "https://example.com/article")
         self.assertEqual(buttons[0]["style"], 5)
         self.assertEqual(buttons[1]["label"], "開啟商店頁面")
+        self.assertEqual(buttons[1]["emoji"], {"name": "🛒"})
         self.assertEqual(buttons[1]["url"], game.link)
         self.assertEqual(buttons[1]["style"], 5)
 
     def test_sender_disables_mentions(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        payload = self._send(game)
+        payload = self._send(game).payload
         self.assertEqual(payload["allowed_mentions"], {"parse": []})
 
 
