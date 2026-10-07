@@ -20,7 +20,7 @@ class GeminiExtractor:
         ]
         prompt = (
             "你是遊戲資訊結構化助手。只根據文章內容判斷哪些遊戲正在限時免費。"
-            "輸出 JSON 陣列，不要 Markdown。欄位為 name, platform, deadline, genre, gameplay, rating, brief, link。"
+            "輸出 JSON 陣列，不要 Markdown。欄位為 name, platform, deadline, genre, gameplay, rating, brief, store_index。"
             "link 必須完全等於候選連結之一，不可猜測。若文章有多個遊戲，分別配對最合理的候選連結；"
             "若無法可靠配對，省略該遊戲。"
             f"\n標題：{article.title}\n文章：{article.text}"
@@ -55,21 +55,27 @@ class GeminiExtractor:
         if not isinstance(data, list):
             raise RuntimeError("Gemini JSON is not a list")
 
-        valid = {item.url for item in article.store_links}
         result = []
         seen = set()
+        used_indexes = set()
 
         for item in data:
             if not isinstance(item, dict):
                 continue
             name = str(item.get("name", "")).strip()
-            link = str(item.get("link", "")).strip()
-            if not name or link not in valid:
+            index = item.get("store_index")
+            if isinstance(index, bool) or not isinstance(index, int):
                 continue
+            if not name or not 1 <= index <= len(article.store_links):
+                continue
+            if index in used_indexes:
+                continue
+            link = article.store_links[index - 1].url
             key = (name.casefold(), link)
             if key in seen:
                 continue
             seen.add(key)
+            used_indexes.add(index)
             result.append(
                 Game(
                     name=name[:200],
