@@ -48,7 +48,7 @@ def main():
                         image=game.image,
                         steam_price=price,
                     )
-                    discord.send(game, article.title)
+                    discord.send(game, article.title, article.url)
                     processed.add(key)
                 except Exception as exc:
                     article_failed = True
