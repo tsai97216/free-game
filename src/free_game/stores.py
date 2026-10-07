@@ -8,6 +8,9 @@ class SteamPriceResolver:
         self.http = http
 
     def resolve(self, name, link):
+        if urlparse(link).netloc.lower() != "store.steampowered.com":
+            return ""
+
         appid = self._appid(link)
         if appid:
             try:
