@@ -23,9 +23,11 @@ class MainFlowTests(unittest.TestCase):
             def get(self, url):
                 return b"<html><body>Example</body></html>", {}
 
+        games = self.games
+
         class FakeAI:
             def extract(self, article):
-                return self.games
+                return games
 
         class FakeSteam:
             def resolve(self, name, link):
@@ -60,9 +62,11 @@ class MainFlowTests(unittest.TestCase):
             def get(self, url):
                 return b"<html><body>Example</body></html>", {}
 
+        games = self.games
+
         class FakeAI:
             def extract(self, article):
-                return [self.games[0]]
+                return [games[0]]
 
         class FakeSteam:
             def resolve(self, name, link):
