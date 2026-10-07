@@ -2,6 +2,8 @@ import unittest
 
 from free_game.article import normalize_store_url, parse_article
 from free_game.stores import SteamPriceResolver
+from free_game.state import StateStore
+from free_game.models import Game
 
 class ArticleTests(unittest.TestCase):
     def test_steam_widget_is_normalized(self):
@@ -37,6 +39,13 @@ class SteamTests(unittest.TestCase):
         ]
         best = SteamPriceResolver._best_match("Example Game", items)
         self.assertEqual(best["name"], "Example Game")
+
+    def test_game_key_and_legacy_article_key(self):
+        game = Game(name="Example", link="https://store.steampowered.com/app/1/")
+        key = StateStore.game_key("https://example.com/article", game)
+        self.assertTrue(key.startswith("game|"))
+        values = {StateStore.article_key("https://example.com/article")}
+        self.assertTrue(StateStore.is_article_processed(values, "https://example.com/article"))
 
 if __name__ == "__main__":
     unittest.main()
