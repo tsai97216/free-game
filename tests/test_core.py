@@ -129,7 +129,7 @@ class AITests(unittest.TestCase):
         from free_game.ai import GeminiExtractor
 
         class FakeHttp:
-            def post_json(self, url, payload, timeout=45):
+            def post_json(self, url, payload, timeout=45, headers=None):
                 body = json.dumps({
                     "candidates": [{"content": {"parts": [{
                         "text": "```json\\n[{\\"name\\":\\"Example\\",\\"link\\":\\"https://store.steampowered.com/app/1/\\"}]\\n```"
