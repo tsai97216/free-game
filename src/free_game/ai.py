@@ -38,7 +38,9 @@ class GeminiExtractor:
                 "responseMimeType": "application/json",
             },
         }
-        _, body, _ = self.http.post_json(\n            url, payload, timeout=45, headers={"x-goog-api-key": self.api_key}\n        )
+        _, body, _ = self.http.post_json(
+            url, payload, timeout=45, headers={"x-goog-api-key": self.api_key}
+        )
 
         try:
             response = json.loads(body)
