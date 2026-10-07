@@ -29,8 +29,7 @@ class GeminiExtractor:
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
             + self.model
-            + ":generateContent?key="
-            + self.api_key
+            + ":generateContent"
         )
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
@@ -39,7 +38,7 @@ class GeminiExtractor:
                 "responseMimeType": "application/json",
             },
         }
-        _, body, _ = self.http.post_json(url, payload, timeout=45)
+        _, body, _ = self.http.post_json(\n            url, payload, timeout=45, headers={"x-goog-api-key": self.api_key}\n        )
 
         try:
             response = json.loads(body)
