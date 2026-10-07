@@ -8,43 +8,70 @@ def clip(value, n):
     return value if len(value) <= n else value[: n - 1] + "…"
 
 
+def optional_field(name, value, inline=True):
+    value = str(value or "").strip()
+    if not value:
+        return None
+    return {"name": name, "value": clip(value, 1024), "inline": inline}
+
+
 class DiscordSender:
     def __init__(self, http, webhook):
         self.http, self.webhook = http, webhook
 
     def send(self, game, article_title, article_url):
-        price = (
-            f"~~{game.steam_price}~~ **Free**"
-            if game.steam_price
-            else "**Free**"
-        )
+        if game.steam_price:
+            price = f"~~{game.steam_price}~~ → **免費**"
+        else:
+            price = "**免費**"
+
+        deadline = game.deadline or "期限未提供"
+        brief = game.brief or "限時免費活動"
         description = (
-            f"{price} until {game.deadline or '未提供'}\n\n"
-            f"🎮 **遊戲類型**：{game.genre or '未提供'}\n"
-            f"🕹️ **玩法簡介**：{game.gameplay or '未提供'}\n"
-            f"⭐ **玩家評價**：{game.rating or '未提供'}\n"
-            f"> {game.brief or '限時免費活動'}"
+            f"**限時免費** · {clip(deadline, 200)}\n"
+            f"{price}\n\n"
+            f"{clip(brief, 1000)}"
         )
+
         fields = [
             {
-                "name": "領取平台",
+                "name": "⏳ 免費期限",
+                "value": clip(deadline, 1024),
+                "inline": True,
+            },
+            {
+                "name": "🎮 平台",
                 "value": clip(game.platform or "未知", 1024),
                 "inline": True,
             },
-            {
-                "name": "文章來源",
-                "value": f"[4Gamers 傳送門]({article_url})",
-                "inline": True,
-            },
         ]
+
+        for field in (
+            optional_field("🧩 遊戲類型", game.genre),
+            optional_field("⭐ 玩家評價", game.rating),
+            optional_field("🕹️ 玩法", game.gameplay, inline=False),
+            optional_field(
+                "📰 文章來源",
+                f"[4Gamers 傳送門]({article_url})",
+            ),
+            optional_field(
+                "🛒 立即領取",
+                f"[開啟商店頁面]({game.link})",
+            ),
+        ):
+            if field:
+                fields.append(field)
+
         embed = {
-            "title": clip(f"🎁 限時免費情報：{game.name}", 256),
+            "title": clip(f"🎁 {game.name}", 256),
             "url": game.link,
             "description": clip(description, 4096),
+            "color": 0x5865F2,
             "fields": fields,
-            "footer": {"text": "限時免費情報系統"},
+            "footer": {"text": "Free Game Notifier"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
         if game.image:
             embed["image"] = {"url": game.image}
 
