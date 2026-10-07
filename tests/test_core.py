@@ -121,6 +121,71 @@ class CoreStateTests(unittest.TestCase):
 
 
 class DiscordTests(unittest.TestCase):
+    def test_sender_uses_redesigned_embed_layout(self):
+        class FakeHttp:
+            def post_json(self, url, payload):
+                self.payload = payload
+                return 204, b"", {}
+
+        http = FakeHttp()
+        game = Game(
+            name="Example",
+            platform="Steam",
+            deadline="7日內轉付費",
+            genre="生態模擬",
+            gameplay="經營生態系統",
+            rating="極度好評",
+            brief="建立並維持一個完整的生態系統。",
+            link="https://store.steampowered.com/app/1/",
+            image="https://example.com/image.jpg",
+            steam_price="NT$ 300.00",
+        )
+        DiscordSender(http, "https://discord.example/webhook").send(
+            game, "Article", "https://example.com/article"
+        )
+
+        embed = http.payload["embeds"][0]
+        self.assertEqual(embed["title"], "🎁 Example")
+        self.assertEqual(embed["url"], game.link)
+        self.assertEqual(embed["color"], 0x5865F2)
+        self.assertIn("~~NT$ 300.00~~ → **免費**", embed["description"])
+        self.assertIn("7日內轉付費", embed["description"])
+        self.assertEqual(embed["image"]["url"], game.image)
+        self.assertEqual(
+            [field["name"] for field in embed["fields"]],
+            [
+                "⏳ 免費期限",
+                "🎮 平台",
+                "🧩 遊戲類型",
+                "⭐ 玩家評價",
+                "🕹️ 玩法",
+                "📰 文章來源",
+                "🛒 立即領取",
+            ],
+        )
+
+    def test_sender_omits_empty_optional_fields(self):
+        class FakeHttp:
+            def post_json(self, url, payload):
+                self.payload = payload
+                return 204, b"", {}
+
+        http = FakeHttp()
+        game = Game(
+            name="Example",
+            platform="Steam",
+            deadline="今天",
+            link="https://store.steampowered.com/app/1/",
+        )
+        DiscordSender(http, "https://discord.example/webhook").send(
+            game, "Article", "https://example.com/article"
+        )
+
+        field_names = [field["name"] for field in http.payload["embeds"][0]["fields"]]
+        self.assertNotIn("🧩 遊戲類型", field_names)
+        self.assertNotIn("⭐ 玩家評價", field_names)
+        self.assertNotIn("🕹️ 玩法", field_names)
+
     def test_sender_disables_mentions(self):
         class FakeHttp:
             def post_json(self, url, payload):
