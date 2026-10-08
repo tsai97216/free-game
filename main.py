@@ -22,10 +22,14 @@ def process_article(item, http, state, ai, discord, steam, processed):
     games = ai.extract(article)
 
     article_failed = False
+    seen_games = set()
+
     for game in games:
-        key = state.game_key(item.url, game)
-        if key in processed:
+        key = state.game_key(game)
+        if key in seen_games or state.is_game_processed(processed, item.url, game):
             continue
+        seen_games.add(key)
+
         try:
             price = steam.resolve(game.name, game.link)
             game = game.__class__(
@@ -38,6 +42,7 @@ def process_article(item, http, state, ai, discord, steam, processed):
             processed.add(key)
         except Exception as exc:
             article_failed = True
+            seen_games.discard(key)
             print(f"[ERROR] {item.url} | {game.name}: {exc}")
 
     if not article_failed:
