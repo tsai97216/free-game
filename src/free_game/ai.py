@@ -20,7 +20,7 @@ class GeminiExtractor:
         ]
         prompt = (
             "你是遊戲資訊結構化助手。只根據文章內容判斷哪些遊戲正在限時免費。"
-            "輸出 JSON 陣列，不要 Markdown。欄位為 name, platform, deadline, genre, gameplay, rating, brief, store_index。"
+            "輸出 JSON 陣列，不要 Markdown。欄位為 name, platform, deadline, genre, gameplay, rating, brief, store_index。brief 只寫一句 20 字內的超短遊戲特色介紹。"
             "store_index 必須是候選商店連結前面的整數編號，不可自行產生 URL。每個候選連結最多配對一款遊戲；"
             "若文章有多個遊戲，分別配對最合理的候選連結。若無法可靠配對，省略該遊戲。"
             f"\n標題：{article.title}\n文章：{article.text}"
