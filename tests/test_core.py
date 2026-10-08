@@ -147,7 +147,7 @@ class DiscordTests(unittest.TestCase):
             steam_price="免費",
         )
 
-        embed = self._send(game).payload["embeds"][0]
+        embed = self._send(game)["embeds"][0]
         self.assertEqual(embed["title"], "Example")
         self.assertEqual(embed["url"], game.link)
         self.assertIn("💰 **原價**　免費", embed["description"])
@@ -181,7 +181,7 @@ class DiscordTests(unittest.TestCase):
 
     def test_sender_disables_mentions(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        payload = self._send(game).payload
+        payload = self._send(game)
         self.assertEqual(payload["allowed_mentions"], {"parse": []})
 
 
