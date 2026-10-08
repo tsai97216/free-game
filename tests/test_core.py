@@ -170,11 +170,11 @@ class DiscordTests(unittest.TestCase):
         self.assertEqual(http.url, "https://discord.example/webhook?with_components=true")
         buttons = http.payload["components"][0]["components"]
         self.assertEqual(len(buttons), 2)
-        self.assertEqual(buttons[0]["label"], "4Gamers 傳送門")
+        self.assertEqual(buttons[0]["label"], "4Gamers")
         self.assertEqual(buttons[0]["emoji"], {"name": "🔗"})
         self.assertEqual(buttons[0]["url"], "https://example.com/article")
         self.assertEqual(buttons[0]["style"], 5)
-        self.assertEqual(buttons[1]["label"], "開啟商店頁面")
+        self.assertEqual(buttons[1]["label"], "商店頁")
         self.assertEqual(buttons[1]["emoji"], {"name": "🛒"})
         self.assertEqual(buttons[1]["url"], game.link)
         self.assertEqual(buttons[1]["style"], 5)
