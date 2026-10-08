@@ -50,7 +50,7 @@ class MainFlowTests(unittest.TestCase):
                 self.article, FakeHttp(), state, FakeAI(), discord,
                 FakeSteam(), processed,
             )
-            first_key = state.game_key(self.article.url, self.games[0])
+            first_key = state.game_key(self.games[0])
             article_key = state.article_key(self.article.url)
             self.assertFalse(success)
             self.assertEqual(discord.sent, ["First"])
