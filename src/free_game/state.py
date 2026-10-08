@@ -1,5 +1,7 @@
 import json
+import unicodedata
 from pathlib import Path
+
 
 class StateStore:
     def __init__(self, path, limit):
@@ -20,7 +22,8 @@ class StateStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         current = set(values)
         ordered = [item for item in self._order if item in current]
-        ordered.extend(item for item in current if item not in set(ordered))
+        known = set(ordered)
+        ordered.extend(item for item in current if item not in known)
         data = ordered[-self.limit:]
         self._order = data
         self.path.write_text(
@@ -29,12 +32,30 @@ class StateStore:
         )
 
     @staticmethod
-    def game_key(article_url, game):
+    def _normalize(value):
+        value = unicodedata.normalize("NFKC", str(value or "")).strip().casefold()
+        return " ".join(value.split())
+
+    @staticmethod
+    def game_key(game):
+        name = StateStore._normalize(game.name)
+        link = StateStore._normalize(game.link)
+        return "game|" + link + "|" + name
+
+    @staticmethod
+    def legacy_game_key(article_url, game):
         return "game|" + article_url + "|" + game.link + "|" + game.name
 
     @staticmethod
     def article_key(article_url):
         return "article|" + article_url
+
+    @staticmethod
+    def is_game_processed(values, article_url, game):
+        return (
+            StateStore.game_key(game) in values
+            or StateStore.legacy_game_key(article_url, game) in values
+        )
 
     @staticmethod
     def is_article_processed(values, article_url):
