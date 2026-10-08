@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 
+
 @dataclass(frozen=True)
 class StoreLink:
     url: str
     context: str = ""
+
 
 @dataclass(frozen=True)
 class Game:
@@ -17,6 +19,7 @@ class Game:
     link: str = ""
     image: str = ""
     steam_price: str = ""
+
 
 @dataclass(frozen=True)
 class Article:
