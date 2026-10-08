@@ -43,7 +43,7 @@ class DiscordSender:
             "title": clip(game.name, 256),
             "url": game.link,
             "description": clip(description, 4096),
-            "color": 0x5865F2,
+            "color": 0x57F287,
             "footer": {"text": "Free Game Notifier"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
