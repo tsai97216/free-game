@@ -11,8 +11,8 @@ def clip(value, n):
 
 def enable_components(url):
     parts = urlsplit(url)
-    query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query["with_components"] = "true"
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    query.append(("with_components", "true"))
     return urlunsplit(
         (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
     )
