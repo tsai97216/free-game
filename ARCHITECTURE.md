@@ -1,9 +1,29 @@
-# Free Game Notifier
+# Architecture
 
-Python 3.12 + GitHub Actions rewrite of the original notifier.
+## Overview
 
-## Flow
+4Gamers RSS → RSS parser → 限免文章篩選 → Article parser → Gemini extractor → Game validation → Steam price resolver → Discord sender → Processed state
 
-4Gamers RSS → article filter → article parser → Gemini extraction → validation → Steam price resolver → Discord Embed → processed state
+## Modules
 
-The old Code.gs is retained temporarily as the behavior reference until the rewrite is verified.
+- `main.py`: 串接流程，以遊戲為單位處理成功與失敗。同篇文章可產生多款遊戲，單款失敗不會丟掉其他成功結果。
+- `rss.py`: 解析 4Gamers RSS，依標題與摘要篩選限免文章。
+- `article.py`: 解析文章文字、OG Image、Steam / Epic 商店連結與連結 context；Steam Widget URL 會正規化。
+- `ai.py`: 使用 Gemini 結構化遊戲資料。AI 回傳 `store_index`，程式再從已驗證的候選 URL 取值，不直接信任 AI URL。
+- `stores.py`: 先以 Steam App ID 查價，無法取得時才搜尋 Steam；Epic 不會呼叫 Steam 查價。
+- `discord.py`: 建立 Embed 與 4Gamers / 商店頁按鈕。
+- `state.py`: 保存文章與遊戲狀態。遊戲 key 不綁定 4Gamers 文章 URL，因此跨文章也能去重，並保留舊版 key 的相容判斷。
+- `http.py`: 統一 HTTP GET / POST JSON，對暫時性錯誤與 Rate Limit 有限重試。
+
+## GitHub Actions
+
+- Python 3.12
+- 每 15 分鐘排程與手動執行
+- 測試通過後才執行 notifier
+- `data/processed.json` 由 Actions 自動寫回 repository
+- concurrency 避免多個執行同時修改 state
+
+## 設計取向
+
+優先順序：**不漏遊戲 > 不重複通知 > API 使用量**。
+因此去重可以保守，但遊戲辨識與發送流程不應過度過濾。
