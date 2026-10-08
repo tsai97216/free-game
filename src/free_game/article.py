@@ -1,9 +1,12 @@
-from html.parser import HTMLParser
 from html import unescape
+from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse
+
 from .models import Article, StoreLink
 
 ALLOWED_HOSTS = {"store.steampowered.com", "store.epicgames.com"}
+SKIPPED_TAGS = {"script", "style", "noscript", "svg"}
+
 
 class Parser(HTMLParser):
     def __init__(self, base):
@@ -19,23 +22,23 @@ class Parser(HTMLParser):
         self.anchor_text = []
 
     def handle_starttag(self, tag, attrs):
-        a = dict(attrs)
+        attrs = dict(attrs)
         if tag == "body":
             self.body = True
-        if tag in {"script", "style", "noscript", "svg"}:
+        if tag in SKIPPED_TAGS:
             self.skip = True
-        if tag == "meta" and a.get("property") == "og:image" and a.get("content"):
-            self.image = urljoin(self.base, a["content"])
-        if tag == "a" and a.get("href"):
-            self.anchor_url = self._normalized_link(a["href"])
+        if tag == "meta" and attrs.get("property") == "og:image" and attrs.get("content"):
+            self.image = urljoin(self.base, attrs["content"])
+        if tag == "a" and attrs.get("href"):
+            self.anchor_url = self._normalized_link(attrs["href"])
             self.anchor_text = []
             if self.anchor_url:
                 self._add_link(self.anchor_url)
-        if tag == "iframe" and a.get("src"):
-            self._add_link(a["src"])
+        if tag == "iframe" and attrs.get("src"):
+            self._add_link(attrs["src"])
 
     def handle_endtag(self, tag):
-        if tag in {"script", "style", "noscript", "svg"}:
+        if tag in SKIPPED_TAGS:
             self.skip = False
         if tag == "a" and self.anchor_url:
             if self.anchor_text:
@@ -65,19 +68,27 @@ class Parser(HTMLParser):
     def store_links(self):
         return tuple(StoreLink(url, self.contexts.get(url, "")) for url in self.links)
 
+
 def normalize_store_url(url):
-    p = urlparse(url)
-    if p.netloc.lower() == "store.steampowered.com" and "/widget/" in p.path:
-        appid = p.path.rstrip("/").split("/widget/")[-1]
+    parsed = urlparse(url)
+    if parsed.netloc.lower() == "store.steampowered.com" and "/widget/" in parsed.path:
+        appid = parsed.path.rstrip("/").split("/widget/")[-1]
         if appid.isdigit():
             return f"https://store.steampowered.com/app/{appid}/"
     return url
 
+
 def parse_article(html, url, title, summary="", published=""):
-    p = Parser(url)
-    p.feed(html.decode("utf-8", errors="replace"))
-    text = " ".join(dict.fromkeys(p.parts))
-    links = tuple(p.links)
-    return Article(title=title, url=url, summary=summary, published=published,
-                   image=p.image, text=text[:30000], links=links,
-                   store_links=p.store_links())
+    parser = Parser(url)
+    parser.feed(html.decode("utf-8", errors="replace"))
+    text = " ".join(dict.fromkeys(parser.parts))
+    return Article(
+        title=title,
+        url=url,
+        summary=summary,
+        published=published,
+        image=parser.image,
+        text=text[:30000],
+        links=tuple(parser.links),
+        store_links=parser.store_links(),
+    )
