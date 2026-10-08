@@ -35,7 +35,7 @@ class DiscordSender:
             f"⏳ **期限**　{clip(deadline, 200)}\n"
             f"🎮 **平台**　{clip(platform, 200)}\n"
             f"🧩 **遊戲類型**　{clip(genre, 200)}\n"
-            f"📝 **介紹**　{clip(brief, 1000)}\n"
+            f"📝 **介紹**　{clip(brief, 80)}\n"
             f"⭐ **玩家評價**　{clip(rating, 300)}"
         )
 
@@ -61,14 +61,14 @@ class DiscordSender:
                         {
                             "type": 2,
                             "style": 5,
-                            "label": "4Gamers 傳送門",
+                            "label": "4Gamers",
                             "emoji": {"name": "🔗"},
                             "url": article_url,
                         },
                         {
                             "type": 2,
                             "style": 5,
-                            "label": "開啟商店頁面",
+                            "label": "商店頁",
                             "emoji": {"name": "🛒"},
                             "url": game.link,
                         },
