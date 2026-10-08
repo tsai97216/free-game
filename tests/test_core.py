@@ -132,7 +132,7 @@ class DiscordTests(unittest.TestCase):
         DiscordSender(http, "https://discord.example/webhook").send(
             game, "Article", "https://example.com/article"
         )
-        return http.payload
+        return http
 
     def test_sender_uses_simplified_embed_layout(self):
         game = Game(
@@ -147,7 +147,7 @@ class DiscordTests(unittest.TestCase):
             steam_price="免費",
         )
 
-        embed = self._send(game)["embeds"][0]
+        embed = self._send(game).payload["embeds"][0]
         self.assertEqual(embed["title"], "Example")
         self.assertEqual(embed["url"], game.link)
         self.assertIn("💰 **原價**　免費", embed["description"])
