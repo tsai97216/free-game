@@ -181,7 +181,7 @@ class DiscordTests(unittest.TestCase):
 
     def test_sender_disables_mentions(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        payload = self._send(game)
+        payload = self._send(game).payload
         self.assertEqual(payload["allowed_mentions"], {"parse": []})
 
 
