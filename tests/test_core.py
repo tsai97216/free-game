@@ -110,12 +110,46 @@ class StateTests(unittest.TestCase):
 class CoreStateTests(unittest.TestCase):
     def test_game_key_and_legacy_article_key(self):
         game = Game(name="Example", link="https://store.steampowered.com/app/1/")
-        key = StateStore.game_key("https://example.com/article", game)
+        key = StateStore.game_key(game)
         self.assertTrue(key.startswith("game|"))
+        values = {key}
+        self.assertTrue(
+            StateStore.is_game_processed(
+                values, "https://example.com/article", game
+            )
+        )
         values = {StateStore.article_key("https://example.com/article")}
         self.assertTrue(
             StateStore.is_article_processed(
                 values, "https://example.com/article"
+            )
+        )
+
+    def test_same_game_is_deduplicated_across_articles(self):
+        game = Game(
+            name="Example Game",
+            link="https://store.steampowered.com/app/1/",
+        )
+        values = {StateStore.game_key(game)}
+        self.assertTrue(
+            StateStore.is_game_processed(
+                values, "https://example.com/another-article", game
+            )
+        )
+
+    def test_different_games_are_not_deduplicated(self):
+        game = Game(
+            name="Example Game",
+            link="https://store.steampowered.com/app/1/",
+        )
+        other = Game(
+            name="Another Game",
+            link="https://store.steampowered.com/app/2/",
+        )
+        values = {StateStore.game_key(game)}
+        self.assertFalse(
+            StateStore.is_game_processed(
+                values, "https://example.com/article", other
             )
         )
 
@@ -159,6 +193,7 @@ class DiscordTests(unittest.TestCase):
         self.assertEqual(embed["image"]["url"], game.image)
         self.assertEqual(embed["footer"]["text"], "Free Game Notifier")
         self.assertNotIn("fields", embed)
+        self.assertEqual(embed["color"], 0x57F287)
 
     def test_sender_adds_two_link_buttons(self):
         game = Game(
